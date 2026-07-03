@@ -1,5 +1,7 @@
 import type { PerfilDocenteResponse } from "../types/perfilDocente.types";
 
+// Recurso de desarrollo: se conserva como referencia para pruebas locales.
+// La pantalla principal consume el backend mediante perfilDocenteService.ts.
 export const perfilDocenteMock: PerfilDocenteResponse = {
   docente: {
     id: 1,

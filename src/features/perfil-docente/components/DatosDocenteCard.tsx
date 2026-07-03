@@ -16,23 +16,21 @@ export function DatosDocenteCard({ docente }: DatosDocenteCardProps) {
   ];
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+    <section className="h-full rounded-lg border border-[var(--border)] bg-[var(--surface)]">
       <div className="border-b border-[var(--border)] px-5 py-4">
-        <h3 className="text-base font-semibold">Datos generales</h3>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          Información principal para la pantalla de Perfil Docente.
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
+          Docente
         </p>
+        <h3 className="mt-1 text-base font-semibold">Datos generales</h3>
       </div>
 
-      <dl className="grid gap-px overflow-hidden rounded-b-lg bg-[var(--border-soft)] sm:grid-cols-2 xl:grid-cols-4">
+      <dl className="divide-y divide-[var(--border-soft)]">
         {fields.map(([label, value]) => (
-          <div className="bg-[var(--surface)] p-4" key={label}>
+          <div className="grid gap-1 px-5 py-3.5 sm:grid-cols-[12rem_1fr]" key={label}>
             <dt className="text-xs font-semibold uppercase text-[var(--muted)]">
               {label}
             </dt>
-            <dd className="mt-2 min-h-6 text-sm font-medium text-[var(--text)]">
-              {value}
-            </dd>
+            <dd className="text-sm font-medium text-[var(--text)]">{value}</dd>
           </div>
         ))}
       </dl>

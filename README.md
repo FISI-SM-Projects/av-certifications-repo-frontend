@@ -6,6 +6,12 @@ Contiene una aplicacion Next.js con TypeScript y Tailwind CSS para la pantalla `
 
 ## Ejecutar
 
+Crear `.env.local` a partir de `.env.example`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
 ```cmd
 npm install
 npm run dev
@@ -15,4 +21,10 @@ URL local: `http://localhost:3000/perfil-docente`.
 
 ## Alcance actual
 
-La pantalla usa datos simulados locales y todavia no consume el backend real.
+La pantalla consume el backend Spring Boot mediante `NEXT_PUBLIC_API_URL`.
+
+Fase 7: la interfaz del Perfil Docente fue pulida con estilo institucional oscuro.
+
+Fase 8: el frontend quedo validado para funcionar autonomamente con mocks locales.
+
+Fase 9: el frontend quedo integrado con el backend Spring Boot.
