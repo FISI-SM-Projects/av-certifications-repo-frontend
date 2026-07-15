@@ -223,6 +223,7 @@ export function SemesterCertificateSimulationForm({
                   </div>
                   <div className="flex items-end">
                     <button
+                      aria-label={`Eliminar curso esperado ${row.code || row.id}`}
                       className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={rows.length === 1}
                       onClick={() => removeRow(row.id)}
@@ -238,7 +239,15 @@ export function SemesterCertificateSimulationForm({
         </div>
 
         <div aria-live="polite" className="space-y-3">
-          {hasMissingCourses ? (
+          {semester.trim() === "" || hasIncompleteRows ? (
+            <FeedbackPanel
+              message="Completa el semestre, el código y la sección de cada curso esperado para continuar."
+              title="Datos pendientes"
+              tone="warning"
+            />
+          ) : null}
+
+          {hasMissingCourses && !hasIncompleteRows && semester.trim() !== "" ? (
             <FeedbackPanel
               message="Para generar la constancia semestral, todos los cursos esperados deben tener constancia por curso."
               title="Hay cursos faltantes"

@@ -140,8 +140,8 @@ export function AppSidebar() {
       <div className="mt-auto border-t border-[var(--border)] px-4 py-4">
         {isAuthenticated ? <LogoutButton className="w-full rounded-md border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]" /> : null}
         <div className="mt-4 flex items-center justify-between text-xs text-[var(--muted)]">
-          <span>Sprint 2</span>
-          <span className="font-semibold text-[var(--gold-soft)]">Roles simulados</span>
+          <span>Sprint 3</span>
+          <span className="font-semibold text-[var(--gold-soft)]">Constancias</span>
         </div>
       </div>
     </aside>
