@@ -1,10 +1,17 @@
 # Gestion Docente FISI - Frontend
 
-Repositorio frontend del Sistema de Gestion Docente FISI.
+Frontend web del Sistema de Gestion Docente y Constancias de la FISI. Esta desarrollado con Next.js App Router y queda al cierre del Sprint 2 con autenticacion simulada, rutas por rol y vistas base para docente, director y administrador.
 
-Contiene una aplicacion Next.js con TypeScript y Tailwind CSS para la pantalla `/perfil-docente` del Sprint 1.
+El diseno institucional oscuro se mantiene como base visual, priorizando legibilidad, contraste y continuidad con el Perfil Docente del Sprint 1.
 
-## Ejecutar
+## Tecnologias
+
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS
+
+## Configuracion
 
 Crear `.env.local` a partir de `.env.example`:
 
@@ -12,106 +19,97 @@ Crear `.env.local` a partir de `.env.example`:
 NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
 
-```cmd
-npm install
-npm run dev
+`.env.local` contiene configuracion local y no se versiona.
+
+## Ejecucion
+
+```powershell
+npm.cmd install
+npm.cmd run dev
+npm.cmd run lint
+npm.cmd run build
 ```
 
-URL local: `http://localhost:3000/perfil-docente`.
+En PowerShell se puede usar `npm.cmd` si `npm.ps1` esta bloqueado por Execution Policy.
 
-## Alcance actual
-
-La pantalla consume el backend Spring Boot mediante `NEXT_PUBLIC_API_URL`.
-
-Fase 7: la interfaz del Perfil Docente fue pulida con estilo institucional oscuro.
-
-Fase 8: el frontend quedo validado para funcionar autonomamente con mocks locales.
-
-Fase 9: el frontend quedo integrado con el backend Spring Boot.
-
-## Estructura interna del frontend
-
-El frontend usa Next.js con App Router, TypeScript y Tailwind CSS. A diferencia de un proyecto HTML, CSS y JavaScript tradicional, la aplicacion separa rutas, componentes reutilizables, funcionalidades, servicios, tipos y utilidades compartidas.
-
-Estructura resumida:
+## Rutas disponibles
 
 ```text
-src/
-|-- app/
-|   |-- layout.tsx
-|   |-- page.tsx
-|   |-- globals.css
-|   |-- favicon.ico
-|   `-- perfil-docente/
-|       |-- page.tsx
-|       `-- loading.tsx
-|-- components/
-|   |-- layout/
-|   |-- shared/
-|   `-- ui/
-|-- features/
-|   `-- perfil-docente/
-|       |-- components/
-|       |-- mocks/
-|       |-- services/
-|       `-- types/
-`-- lib/
-    `-- api.ts
+/login-demo
+/perfil-docente
+/director
+/director/docentes
+/director/docentes/[teacherCode]
+/director/constancias
+/admin
 ```
 
-`app/` define las rutas de Next.js. Cada carpeta dentro de `app/` representa una URL. Por ejemplo, `app/perfil-docente/page.tsx` corresponde a `/perfil-docente`. `layout.tsx` define la estructura comun, `globals.css` contiene estilos globales y `loading.tsx` define el estado de carga. Las paginas deben mantenerse lo mas delgadas posible.
+## Acceso por rol
 
-`components/` contiene componentes reutilizables por varias interfaces. `components/layout/` agrupa piezas de estructura visual general, como sidebar y header. `components/shared/` queda reservado para componentes compartidos por distintas funcionalidades. `components/ui/` queda reservado para elementos visuales genericos como botones, tarjetas, badges o tablas.
+### DOCENTE
 
-`features/` contiene modulos funcionales o interfaces completas. `features/perfil-docente/` agrupa todo lo especifico de la interfaz Perfil Docente.
+- `/perfil-docente`
 
-Dentro de una feature, `components/` contiene componentes visuales exclusivos de esa interfaz; `services/` contiene comunicacion con APIs y uso de `fetch`; `types/` define tipos TypeScript y contratos de datos; `mocks/` conserva datos simulados para pruebas o desarrollo, pero no deben usarse silenciosamente como fallback en produccion.
+### DIRECTOR
 
-`lib/` contiene utilidades y configuracion compartida. En este proyecto, `lib/api.ts` centraliza la URL base del backend y la configuracion comun para llamadas HTTP.
+- `/director`
+- `/director/docentes`
+- `/director/docentes/[teacherCode]`
+- `/director/constancias`
 
-Flujo de datos en Perfil Docente:
+### ADMIN
 
-```text
-app/perfil-docente/page.tsx
-    |
-    v
-features/perfil-docente/services/perfilDocenteService.ts
-    |
-    v
-API REST Spring Boot
-    |
-    v
-PerfilDocenteResponse
-    |
-    v
-components de Perfil Docente
-```
+- `/admin`
+- acceso a vistas de director;
+- acceso permitido a `/perfil-docente`.
 
-La pagina coordina la interfaz, el service obtiene los datos, los types definen el contrato, los components renderizan la informacion y la URL del backend se centraliza en `lib/api.ts`.
+## Autenticacion simulada
 
-En un proyecto tradicional, una interfaz podria estar agrupada como:
+- Los usuarios demo se cargan desde el backend.
+- La sesion se guarda en `localStorage`.
+- La clave local es `gestion-docente-session`.
+- Los guards son visuales y dependen de la sesion simulada.
+- El logout elimina la sesion local y redirige a `/login-demo`.
+- No hay cookies, tokens, JWT, LDAP ni seguridad real.
 
-```text
-perfil.html
-perfil.css
-perfil.js
-```
+## Estado funcional
 
-En Next.js, la misma interfaz se divide en una ruta dentro de `app/`, componentes React, servicios, tipos TypeScript, estilos globales o utilitarios, y codigo compartido. Esta separacion facilita reutilizacion, pruebas, mantenimiento, escalamiento y trabajo en equipo.
+- Login demo por rol.
+- Persistencia local de sesion.
+- Logout.
+- Sidebar y header dinamicos.
+- Guards visuales por rol.
+- Perfil docente del Sprint 1.
+- Dashboard minimo de director.
+- Listado de docentes por Departamento Academico.
+- Perfil docente en modo consulta para director/admin.
+- Placeholder de constancias del director.
+- Dashboard admin minimo.
 
-Para agregar una nueva interfaz, crear una ruta en `app/` y una feature con su logica especifica. Por ejemplo:
+## Limitaciones
 
-```text
-src/
-|-- app/
-|   `-- administracion/
-|       `-- page.tsx
-`-- features/
-    `-- administracion/
-        |-- components/
-        |-- services/
-        |-- types/
-        `-- mocks/
-```
+- No hay middleware de seguridad.
+- No hay JWT.
+- No hay LDAP.
+- No hay CRUD administrativo.
+- No hay aprobacion real de constancias.
+- No hay generacion PDF.
+- `/director/constancias` es un placeholder.
+- Los modulos admin son solo visuales.
+- La validacion visual automatica con navegador integrado puede estar limitada por aislamiento de `localhost`.
+- `lint`, `build` y smoke HTTP de rutas fueron validados.
 
-La ruta vive en `app/`, la logica especifica vive en `features/`, los componentes globales viven en `components/` y las utilidades comunes viven en `lib/`. No se debe colocar toda la logica dentro de `page.tsx`.
+## Pruebas
+
+Verificaciones de cierre del Sprint 2:
+
+- `npm.cmd run lint`: correcto.
+- `npm.cmd run build`: correcto.
+- Las rutas principales compilan y renderizan.
+- Las llamadas al backend fueron validadas con `NEXT_PUBLIC_API_URL=http://localhost:8080`.
+
+El build puede requerir acceso de red si Next.js necesita descargar Google Fonts en un entorno restringido.
+
+## Siguiente sprint
+
+El siguiente sprint deberia implementar el flujo real de constancias: aprobacion, generacion de PDF, estados operativos, trazabilidad visual y reemplazo progresivo de placeholders por datos reales.
