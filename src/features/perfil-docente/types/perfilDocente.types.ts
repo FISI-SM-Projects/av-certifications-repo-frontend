@@ -1,3 +1,5 @@
+import type { CertificateGenerationSummary } from "@/features/constancias/types/constancia.types";
+
 export type EstadoConstancia = "GENERADO" | "APROBADO";
 
 export type Docente = {
@@ -11,16 +13,9 @@ export type Docente = {
   condicion: string;
 };
 
-export type Constancia = {
-  id: number;
-  titulo: string;
-  periodo: string;
-  estado: EstadoConstancia;
-  fechaGeneracion: string;
-  archivoUrl: string;
-};
+export type ConstanciaPerfil = CertificateGenerationSummary;
 
 export type PerfilDocenteResponse = {
   docente: Docente;
-  constancias: Constancia[];
+  constancias: ConstanciaPerfil[];
 };

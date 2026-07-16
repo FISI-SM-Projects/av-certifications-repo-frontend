@@ -119,7 +119,7 @@ export function DepartmentTeachersTable() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-[var(--border)] bg-[rgba(25,36,30,0.95)] text-[var(--muted)]">
+              <tr className="border-b border-[var(--border)] bg-[rgba(90,15,36,0.88)] text-[var(--muted)]">
                 <th className="px-5 py-3 font-semibold">Código</th>
                 <th className="px-5 py-3 font-semibold">Docente</th>
                 <th className="px-5 py-3 font-semibold">Correo</th>
@@ -131,7 +131,7 @@ export function DepartmentTeachersTable() {
             <tbody>
               {docentes.map((docente) => (
                 <tr
-                  className="border-b border-[var(--border-soft)] transition hover:bg-[rgba(25,36,30,0.86)]"
+                  className="border-b border-[var(--border-soft)] transition hover:bg-[rgba(90,15,36,0.55)]"
                   key={docente.teacherCode}
                 >
                   <td className="px-5 py-4 font-semibold text-[var(--gold-soft)]">

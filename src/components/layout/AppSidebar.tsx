@@ -50,7 +50,7 @@ export function AppSidebar() {
   const menuItems = user !== null ? MENU_BY_ROLE[user.role] : [];
 
   return (
-    <aside className="flex min-h-screen w-full flex-col border-r border-[var(--border)] bg-[rgba(10,16,13,0.96)] text-sm text-[var(--text)] md:sticky md:top-0 md:w-64">
+    <aside className="flex min-h-screen w-full flex-col border-r border-[var(--border)] bg-[rgba(27,5,12,0.96)] text-sm text-[var(--text)] md:sticky md:top-0 md:w-64">
       <div className="border-b border-[var(--border)] px-5 py-5">
         <div className="flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-md border border-[rgba(201,168,93,0.7)] bg-[var(--surface-soft)] text-xs font-bold text-[var(--gold-soft)] shadow-[0_0_0_3px_rgba(201,168,93,0.06)]">
@@ -107,7 +107,7 @@ export function AppSidebar() {
             {menuItems.map((item) => {
               const isActive = isActivePath(pathname, item.href);
               const itemClassName = isActive
-                ? "flex items-center justify-between rounded-md border border-[rgba(79,155,97,0.42)] bg-[var(--green-soft)] px-3 py-2.5 font-medium text-[var(--text)] shadow-[inset_3px_0_0_var(--gold)]"
+                ? "flex items-center justify-between rounded-md border border-[rgba(143,41,69,0.72)] bg-[var(--guinda)] px-3 py-2.5 font-medium text-[var(--text)] shadow-[inset_3px_0_0_var(--gold)]"
                 : "flex items-center justify-between rounded-md px-3 py-2.5 text-[var(--muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]";
 
               if (item.disabled) {
@@ -126,7 +126,7 @@ export function AppSidebar() {
                 <Link className={itemClassName} href={item.href} key={item.href}>
                   <span>{item.label}</span>
                   {isActive ? (
-                    <span className="rounded-full bg-[var(--gold)] px-2 py-0.5 text-[11px] font-bold text-[#142016]">
+                    <span className="rounded-full bg-[var(--gold)] px-2 py-0.5 text-[11px] font-bold text-[#1b050c]">
                       activo
                     </span>
                   ) : null}

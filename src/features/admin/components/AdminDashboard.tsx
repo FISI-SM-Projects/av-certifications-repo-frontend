@@ -40,7 +40,7 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-lg border border-[var(--border)] bg-[linear-gradient(135deg,rgba(25,36,30,0.98),rgba(20,29,24,0.98))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.2)]">
+      <section className="rounded-lg border border-[var(--border)] bg-[linear-gradient(135deg,rgba(90,15,36,0.98),rgba(59,10,24,0.98))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.2)]">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
           Administracion simulada
         </p>
@@ -53,13 +53,13 @@ export function AdminDashboard() {
         </p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <div className="rounded-md border border-[var(--border-soft)] bg-[rgba(15,23,19,0.72)] p-3">
+          <div className="rounded-md border border-[var(--border-soft)] bg-[rgba(27,5,12,0.72)] p-3">
             <p className="text-xs text-[var(--muted)]">Correo</p>
             <p className="mt-1 break-words font-semibold">
               {user?.email ?? "Sin correo activo"}
             </p>
           </div>
-          <div className="rounded-md border border-[var(--border-soft)] bg-[rgba(15,23,19,0.72)] p-3">
+          <div className="rounded-md border border-[var(--border-soft)] bg-[rgba(27,5,12,0.72)] p-3">
             <p className="text-xs text-[var(--muted)]">Rol</p>
             <p className="mt-1 font-semibold">{user?.role ?? "Sin rol"}</p>
           </div>
@@ -104,7 +104,7 @@ export function AdminDashboard() {
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {quickLinks.map((link) => (
             <Link
-              className="rounded-lg border border-[var(--border-soft)] bg-[rgba(15,23,19,0.72)] p-4 transition hover:border-[rgba(201,168,93,0.55)] hover:bg-[rgba(25,36,30,0.9)]"
+              className="rounded-lg border border-[var(--border-soft)] bg-[rgba(27,5,12,0.72)] p-4 transition hover:border-[rgba(201,168,93,0.55)] hover:bg-[rgba(90,15,36,0.75)]"
               href={link.href}
               key={link.href}
             >

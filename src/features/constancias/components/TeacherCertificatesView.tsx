@@ -16,6 +16,7 @@ import type {
   EstadoConstancia,
 } from "@/features/constancias/types/constancia.types";
 import { obtenerTeacherCodeDeSesion } from "@/features/constancias/utils/sessionTeacher";
+import { formatDateTimeInLima } from "@/lib/dates";
 
 type SummaryItem = {
   label: string;
@@ -250,7 +251,7 @@ function CertificatesTable({
                   v{String(certificate.version).padStart(3, "0")}
                 </td>
                 <td className="px-5 py-4 text-[var(--muted)]">
-                  {formatGeneratedAt(certificate.generatedAt)}
+                  {formatDateTimeInLima(certificate.generatedAt)}
                 </td>
                 <td className="px-5 py-4">
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -317,20 +318,4 @@ function PanelMessage({
       {action ? <div className="mt-5">{action}</div> : null}
     </section>
   );
-}
-
-function formatGeneratedAt(value: string): string {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Fecha no disponible";
-  }
-
-  return new Intl.DateTimeFormat("es-PE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 }

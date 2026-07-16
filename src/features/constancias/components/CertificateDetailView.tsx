@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useAuth } from "@/features/auth/context/AuthProvider";
 import {
   construirUrlDescargaPdf,
   construirUrlVisualizacionPdf,
@@ -13,9 +14,11 @@ import type {
   CertificateGenerationDetail,
   EstadoConstancia,
 } from "@/features/constancias/types/constancia.types";
+import { formatDateTimeInLima } from "@/lib/dates";
 
 type CertificateDetailViewProps = {
   generationId: string;
+  returnTo?: string;
 };
 
 type DetailItem = {
@@ -23,11 +26,13 @@ type DetailItem = {
   value: string;
 };
 
-export function CertificateDetailView({ generationId }: CertificateDetailViewProps) {
+export function CertificateDetailView({ generationId, returnTo }: CertificateDetailViewProps) {
+  const { user } = useAuth();
   const normalizedGenerationId = generationId.trim();
   const [certificate, setCertificate] = useState<CertificateGenerationDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const backLink = useMemo(() => buildBackLink(returnTo, user?.role), [returnTo, user?.role]);
 
   const loadCertificate = useCallback(async () => {
     if (normalizedGenerationId === "") {
@@ -91,7 +96,7 @@ export function CertificateDetailView({ generationId }: CertificateDetailViewPro
             >
               Reintentar
             </button>
-            <BackLink />
+            <BackLink href={backLink.href} label={backLink.label} />
           </div>
         }
         eyebrow="Detalle no disponible"
@@ -104,7 +109,7 @@ export function CertificateDetailView({ generationId }: CertificateDetailViewPro
   if (certificate === null || pdfUrl === null || downloadUrl === null) {
     return (
       <PanelMessage
-        action={<BackLink />}
+        action={<BackLink href={backLink.href} label={backLink.label} />}
         eyebrow="Sin datos"
         message="No hay metadata disponible para esta constancia."
         title="Constancia no encontrada"
@@ -131,7 +136,7 @@ export function CertificateDetailView({ generationId }: CertificateDetailViewPro
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <BackLink />
+            <BackLink href={backLink.href} label={backLink.label} />
             <a
               className="rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
               download
@@ -208,7 +213,7 @@ function buildDetailItems(certificate: CertificateGenerationDetail): DetailItem[
     { label: "Código de curso", value: certificate.courseCode ?? "Constancia semestral" },
     { label: "Sección", value: certificate.section ?? "No aplica" },
     { label: "Semestre", value: certificate.semester },
-    { label: "Fecha de generación", value: formatGeneratedAt(certificate.generatedAt) },
+    { label: "Fecha de generación", value: formatDateTimeInLima(certificate.generatedAt) },
     { label: "Generation ID", value: certificate.generationId },
     { label: "Certificate key", value: certificate.certificateKey },
   ];
@@ -228,15 +233,77 @@ function CertificateStatusBadge({ status }: { status: EstadoConstancia }) {
   );
 }
 
-function BackLink() {
+type BackLinkConfig = {
+  href: string;
+  label: string;
+};
+
+function BackLink({ href, label }: BackLinkConfig) {
   return (
     <Link
       className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-      href="/constancias"
+      href={href}
     >
-      Volver a mis constancias
+      {label}
     </Link>
   );
+}
+
+function buildBackLink(returnTo: string | undefined, role: string | undefined): BackLinkConfig {
+  const validatedReturnTo = validateReturnTo(returnTo);
+
+  if (validatedReturnTo === "/constancias") {
+    return { href: validatedReturnTo, label: "Volver a mis constancias" };
+  }
+
+  if (validatedReturnTo === "/perfil-docente") {
+    return { href: validatedReturnTo, label: "Volver al perfil docente" };
+  }
+
+  if (validatedReturnTo?.startsWith("/director/docentes/")) {
+    return { href: validatedReturnTo, label: "Volver al perfil del docente" };
+  }
+
+  if (role === "DIRECTOR") {
+    return { href: "/director/docentes", label: "Volver al listado de docentes" };
+  }
+
+  return { href: "/constancias", label: "Volver a mis constancias" };
+}
+
+function validateReturnTo(returnTo: string | undefined): string | null {
+  if (returnTo === undefined) {
+    return null;
+  }
+
+  const candidate = returnTo.trim();
+  const lowerCandidate = candidate.toLowerCase();
+
+  if (
+    candidate === "" ||
+    !candidate.startsWith("/") ||
+    candidate.startsWith("//") ||
+    candidate.includes("\\") ||
+    candidate.includes("..") ||
+    lowerCandidate.startsWith("http://") ||
+    lowerCandidate.startsWith("https://") ||
+    lowerCandidate.startsWith("javascript:") ||
+    lowerCandidate.includes("%2e") ||
+    lowerCandidate.includes("%2f") ||
+    lowerCandidate.includes("%5c")
+  ) {
+    return null;
+  }
+
+  if (candidate === "/constancias" || candidate === "/perfil-docente") {
+    return candidate;
+  }
+
+  if (/^\/director\/docentes\/[^/?#\\]+$/.test(candidate)) {
+    return candidate;
+  }
+
+  return null;
 }
 
 function PanelMessage({
@@ -264,20 +331,4 @@ function PanelMessage({
       {action ? <div className="mt-5">{action}</div> : null}
     </section>
   );
-}
-
-function formatGeneratedAt(value: string): string {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Fecha no disponible";
-  }
-
-  return new Intl.DateTimeFormat("es-PE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 }

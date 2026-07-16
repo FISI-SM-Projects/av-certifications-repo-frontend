@@ -1,162 +1,50 @@
 # Gestion Docente FISI - Frontend
 
-Frontend web del Sistema de Gestion Docente y Constancias de la FISI. Esta desarrollado con Next.js App Router y al cierre del Sprint 3 incluye autenticacion simulada, vistas por rol y flujo docente para constancias por curso y semestrales.
+Aplicacion web en Next.js App Router para la gestion docente y consulta de constancias.
 
-El diseno institucional oscuro se mantiene como base visual, priorizando legibilidad, contraste y continuidad con el Perfil Docente del Sprint 1.
+## Requisitos
 
-## Tecnologias
+- Node.js compatible con Next.js 16.
+- npm.
 
-- Next.js App Router
-- React
-- TypeScript
-- Tailwind CSS
-
-## Configuracion
-
-Crear `.env.local` a partir de `.env.example`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8080
-```
-
-`.env.local` contiene configuracion local y no se versiona.
-
-## Ejecucion
+## Levantar el frontend
 
 ```powershell
-npm.cmd install
-npm.cmd run dev
-npm.cmd run lint
-npm.cmd run build
+npm ci
+npm run dev
 ```
 
-En PowerShell se puede usar `npm.cmd` si `npm.ps1` esta bloqueado por Execution Policy.
-
-## Rutas disponibles
+El frontend queda disponible por defecto en:
 
 ```text
-/login-demo
-/perfil-docente
-/constancias
-/constancias/[generationId]
-/director
-/director/docentes
-/director/docentes/[teacherCode]
-/director/constancias
-/admin
+http://localhost:3000
 ```
 
-## Acceso por rol
+## Estructura
 
-### DOCENTE
+`src/app/`
 
-- `/perfil-docente`
-- `/constancias`
-- `/constancias/[generationId]`
+- Rutas, layouts y paginas del App Router.
 
-### DIRECTOR
+`src/features/`
 
-- `/director`
-- `/director/docentes`
-- `/director/docentes/[teacherCode]`
-- `/director/constancias`
+- `admin/`: vista administrativa demo.
+- `auth/`: sesion simulada, login demo y tipos de usuario.
+- `constancias/`: listado, generacion simulada, detalle y servicios de constancias.
+- `director/`: vistas de director y consulta de docentes.
+- `perfil-docente/`: perfil docente consolidado.
 
-### ADMIN
+`src/components/`
 
-- `/admin`
-- acceso a vistas de director;
-- acceso permitido a `/perfil-docente`;
-- acceso permitido a `/constancias` para validacion, aunque puede no tener `teacherCode`.
+- `auth/`: guards de sesion y rol.
+- `layout/`: shell, sidebar y header.
+- `shared/`: componentes compartidos.
+- `ui/`: piezas visuales reutilizables.
 
-## Autenticacion simulada
+`src/lib/`
 
-- Los usuarios demo se cargan desde el backend.
-- La sesion se guarda en `localStorage`.
-- La clave local es `gestion-docente-session`.
-- Los guards son visuales y dependen de la sesion simulada.
-- El logout elimina la sesion local y redirige a `/login-demo`.
-- No hay cookies, tokens, JWT, LDAP ni seguridad real.
+- Configuracion comun, URL de API, cliente HTTP y utilidades.
 
-## Constancias
+`public/`
 
-La ruta `/constancias` permite al docente:
-
-- listar sus ultimas constancias visibles;
-- ver resumen de constancias `GENERADO` y `APROBADO`;
-- generar una constancia por curso mediante una simulacion de recepcion desde Aula Virtual;
-- generar una constancia semestral cuando todos los cursos esperados tienen constancia por curso;
-- ver acciones de detalle y descarga.
-
-La ruta `/constancias/[generationId]` muestra:
-
-- metadata publica de la generacion;
-- visor PDF mediante `iframe`;
-- enlace para abrir el PDF en nueva pestana;
-- descarga directa desde backend.
-
-La constancia semestral usa cursos esperados introducidos manualmente y valida visualmente si ya existen constancias por curso en el listado actual. El backend vuelve a validar esta regla.
-
-## Estado funcional
-
-- Login demo por rol.
-- Persistencia local de sesion.
-- Logout.
-- Sidebar y header dinamicos.
-- Guards visuales por rol.
-- Perfil docente del Sprint 1.
-- Dashboard minimo de director.
-- Listado de docentes por Departamento Academico.
-- Perfil docente en modo consulta para director/admin.
-- Placeholder de constancias del director.
-- Dashboard admin minimo.
-- Listado docente de constancias.
-- Generacion simulada por curso.
-- Generacion semestral simulada.
-- Visor y descarga de PDF.
-
-## Dependencia del backend
-
-El frontend consume la API configurada en:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8080
-```
-
-Endpoints principales usados por el modulo de constancias:
-
-```text
-POST /api/v1/constancias/curso
-POST /api/v1/constancias/semestral
-GET  /api/v1/constancias/docentes/{teacherCode}
-GET  /api/v1/constancias/generaciones/{generationId}
-GET  /api/v1/constancias/certificados/{certificateKey}/historial
-GET  /api/v1/constancias/generaciones/{generationId}/pdf
-GET  /api/v1/constancias/generaciones/{generationId}/download
-```
-
-## Limitaciones
-
-- Sin Moodle real.
-- Sin aprobacion formal por director.
-- Sin middleware de seguridad.
-- Sin JWT.
-- Sin LDAP.
-- Sin CRUD administrativo.
-- Sin QR.
-- Sin firma digital.
-- El visor PDF depende de las capacidades del navegador del usuario.
-- La validacion visual automatica con navegador integrado puede estar limitada por aislamiento de `localhost`.
-
-## Pruebas
-
-Verificaciones de cierre del Sprint 3:
-
-- `npm.cmd run lint`: correcto.
-- `npm.cmd run build`: correcto.
-- Las rutas principales compilan.
-
-El build puede requerir acceso de red si Next.js necesita descargar Google Fonts en un entorno restringido.
-
-## Siguiente sprint
-
-El siguiente sprint deberia enfocarse en aprobacion por director, seguridad real, integracion Moodle, trazabilidad/auditoria y mejoras UX priorizadas para el flujo de constancias.
+- Recursos estaticos.

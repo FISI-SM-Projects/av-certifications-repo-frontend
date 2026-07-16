@@ -198,7 +198,7 @@ export function DemoLoginSelector() {
                 className={`w-full rounded-lg border p-4 text-left transition ${
                   isSelected
                     ? "border-[var(--gold)] bg-[rgba(201,168,93,0.10)]"
-                    : "border-[var(--border-soft)] bg-[var(--surface-muted)] hover:border-[var(--green)]"
+                    : "border-[var(--border-soft)] bg-[var(--surface-muted)] hover:border-[var(--guinda-soft)]"
                 }`}
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -206,7 +206,7 @@ export function DemoLoginSelector() {
                     <p className="font-semibold text-[var(--text)]">{usuario.fullName}</p>
                     <p className="mt-1 text-sm text-[var(--muted)]">{usuario.email}</p>
                   </div>
-                  <span className="w-fit rounded-full border border-[var(--border)] bg-[var(--green-soft)] px-3 py-1 text-xs font-semibold text-[var(--text)]">
+                  <span className="w-fit rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--text)]">
                     {usuario.role}
                   </span>
                 </div>
