@@ -14,6 +14,7 @@ import type {
   CertificateGenerationDetail,
   EstadoConstancia,
 } from "@/features/constancias/types/constancia.types";
+import { formatDateTimeInLima } from "@/lib/dates";
 
 type CertificateDetailViewProps = {
   generationId: string;
@@ -212,7 +213,7 @@ function buildDetailItems(certificate: CertificateGenerationDetail): DetailItem[
     { label: "Código de curso", value: certificate.courseCode ?? "Constancia semestral" },
     { label: "Sección", value: certificate.section ?? "No aplica" },
     { label: "Semestre", value: certificate.semester },
-    { label: "Fecha de generación", value: formatGeneratedAt(certificate.generatedAt) },
+    { label: "Fecha de generación", value: formatDateTimeInLima(certificate.generatedAt) },
     { label: "Generation ID", value: certificate.generationId },
     { label: "Certificate key", value: certificate.certificateKey },
   ];
@@ -330,20 +331,4 @@ function PanelMessage({
       {action ? <div className="mt-5">{action}</div> : null}
     </section>
   );
-}
-
-function formatGeneratedAt(value: string): string {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Fecha no disponible";
-  }
-
-  return new Intl.DateTimeFormat("es-PE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 }

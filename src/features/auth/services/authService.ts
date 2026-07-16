@@ -1,55 +1,60 @@
-import { API_BASE_URL } from "@/lib/api";
+import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
 import type {
   DemoLoginRequest,
   DemoLoginResponse,
+  RolUsuario,
   UsuarioSesion,
 } from "@/features/auth/types/auth.types";
 
-type ErrorResponse = {
-  message?: string;
-};
-
-async function obtenerMensajeError(response: Response): Promise<string> {
-  try {
-    const data = (await response.json()) as ErrorResponse;
-
-    if (typeof data.message === "string" && data.message.trim() !== "") {
-      return data.message;
-    }
-  } catch {
-    // Si el backend no responde JSON, usamos un mensaje generico.
-  }
-
-  return "No se pudo completar la solicitud";
-}
+const VALID_ROLES: RolUsuario[] = ["DOCENTE", "DIRECTOR", "ADMIN"];
 
 export async function obtenerUsuariosDemo(): Promise<UsuarioSesion[]> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/demo-users`, {
-    cache: "no-store",
+  return httpJson<UsuarioSesion[]>("/api/v1/auth/demo-users", {
+    validate: validateUsuariosDemo,
   });
-
-  if (!response.ok) {
-    throw new Error(await obtenerMensajeError(response));
-  }
-
-  return response.json() as Promise<UsuarioSesion[]>;
 }
 
 export async function loginDemo(email: string): Promise<DemoLoginResponse> {
   const request: DemoLoginRequest = { email };
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/demo-login`, {
+  return httpJson<DemoLoginResponse>("/api/v1/auth/demo-login", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-    cache: "no-store",
+    body: request,
+    validate: validateDemoLoginResponse,
   });
+}
 
-  if (!response.ok) {
-    throw new Error(await obtenerMensajeError(response));
+function validateUsuariosDemo(payload: unknown): UsuarioSesion[] {
+  if (!Array.isArray(payload) || !payload.every(isUsuarioSesion)) {
+    throw new ApiError("La respuesta de usuarios demo no tiene el formato esperado.", 0);
   }
 
-  return response.json() as Promise<DemoLoginResponse>;
+  return payload;
+}
+
+function validateDemoLoginResponse(payload: unknown): DemoLoginResponse {
+  if (!isRecord(payload) || !isUsuarioSesion(payload.user)) {
+    throw new ApiError("La respuesta de login demo no tiene el formato esperado.", 0);
+  }
+
+  return { user: payload.user };
+}
+
+function isUsuarioSesion(value: unknown): value is UsuarioSesion {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "number" &&
+    typeof value.fullName === "string" &&
+    typeof value.email === "string" &&
+    isRolUsuario(value.role) &&
+    (typeof value.departamentoAcademico === "string" || value.departamentoAcademico === null) &&
+    (typeof value.teacherCode === "string" || value.teacherCode === null)
+  );
+}
+
+function isRolUsuario(value: unknown): value is RolUsuario {
+  return typeof value === "string" && VALID_ROLES.includes(value as RolUsuario);
 }

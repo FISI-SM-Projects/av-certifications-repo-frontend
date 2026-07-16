@@ -1,54 +1,58 @@
-import { API_BASE_URL } from "@/lib/api";
+import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
 import type { PerfilDocenteResponse } from "@/features/perfil-docente/types/perfilDocente.types";
 import type { DirectorDocenteListado } from "@/features/director/types/director.types";
-
-type ErrorResponse = {
-  message?: string;
-};
-
-async function obtenerMensajeError(response: Response): Promise<string> {
-  try {
-    const data = (await response.json()) as ErrorResponse;
-
-    if (typeof data.message === "string" && data.message.trim() !== "") {
-      return data.message;
-    }
-  } catch {
-    // Si no hay JSON de error, se devuelve un mensaje generico.
-  }
-
-  return "No se pudo completar la solicitud";
-}
 
 export async function obtenerDocentesPorDepartamento(
   departamentoAcademico: string,
 ): Promise<DirectorDocenteListado[]> {
-  const departamento = encodeURIComponent(departamentoAcademico);
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/director/docentes?departamentoAcademico=${departamento}`,
+  const departamento = encodeURIComponent(departamentoAcademico.trim());
+
+  return httpJson<DirectorDocenteListado[]>(
+    `/api/v1/director/docentes?departamentoAcademico=${departamento}`,
     {
-      cache: "no-store",
+      validate: validateDirectorDocenteList,
     },
   );
-
-  if (!response.ok) {
-    throw new Error(await obtenerMensajeError(response));
-  }
-
-  return response.json() as Promise<DirectorDocenteListado[]>;
 }
 
 export async function obtenerPerfilDocentePorCodigo(
   teacherCode: string,
 ): Promise<PerfilDocenteResponse> {
-  const codigo = encodeURIComponent(teacherCode);
-  const response = await fetch(`${API_BASE_URL}/api/v1/docentes/${codigo}/perfil`, {
-    cache: "no-store",
-  });
+  const codigo = encodeURIComponent(teacherCode.trim());
 
-  if (!response.ok) {
-    throw new Error(await obtenerMensajeError(response));
+  return httpJson<PerfilDocenteResponse>(`/api/v1/docentes/${codigo}/perfil`, {
+    validate: validatePerfilDocenteResponse,
+  });
+}
+
+function validateDirectorDocenteList(payload: unknown): DirectorDocenteListado[] {
+  if (!Array.isArray(payload) || !payload.every(isDirectorDocenteListado)) {
+    throw new ApiError("La lista de docentes no tiene el formato esperado.", 0);
   }
 
-  return response.json() as Promise<PerfilDocenteResponse>;
+  return payload;
+}
+
+function isDirectorDocenteListado(value: unknown): value is DirectorDocenteListado {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.teacherCode === "string" &&
+    typeof value.nombres === "string" &&
+    typeof value.apellidos === "string" &&
+    typeof value.correoInstitucional === "string" &&
+    typeof value.departamentoAcademico === "string" &&
+    typeof value.categoria === "string" &&
+    typeof value.condicion === "string"
+  );
+}
+
+function validatePerfilDocenteResponse(payload: unknown): PerfilDocenteResponse {
+  if (!isRecord(payload) || !isRecord(payload.docente) || !Array.isArray(payload.constancias)) {
+    throw new ApiError("El perfil docente no tiene el formato esperado.", 0);
+  }
+
+  return payload as PerfilDocenteResponse;
 }

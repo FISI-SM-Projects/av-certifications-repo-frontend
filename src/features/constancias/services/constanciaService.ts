@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/lib/api";
+import { ApiError, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
 import type {
   CertificateGenerationDetail,
   CertificateGenerationSummary,
@@ -10,7 +11,6 @@ import type {
 } from "@/features/constancias/types/constancia.types";
 import {
   ConstanciaApiError,
-  type ConstanciaApiErrorBody,
   type MissingCourse,
 } from "@/features/constancias/types/constancia-error.types";
 
@@ -20,45 +20,34 @@ const ERROR_SOLICITUD = "No se pudo completar la solicitud de constancias";
 export async function generarConstanciaCurso(
   request: CourseCertificateRequest,
 ): Promise<CourseCertificateResponse> {
-  const response = await safeFetch(`${API_BASE_URL}/api/v1/constancias/curso`, {
+  return requestConstancia<CourseCertificateResponse>("/api/v1/constancias/curso", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-    cache: "no-store",
+    body: request,
+    validate: validateCourseCertificateResponse,
   });
-
-  return parseJsonResponse<CourseCertificateResponse>(response);
 }
 
 export async function generarConstanciaSemestral(
   request: SemesterCertificateRequest,
 ): Promise<SemesterCertificateResponse> {
-  const response = await safeFetch(`${API_BASE_URL}/api/v1/constancias/semestral`, {
+  return requestConstancia<SemesterCertificateResponse>("/api/v1/constancias/semestral", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-    cache: "no-store",
+    body: request,
+    validate: validateSemesterCertificateResponse,
   });
-
-  return parseJsonResponse<SemesterCertificateResponse>(response);
 }
 
 export async function listarConstanciasDocente(
   teacherCode: string,
 ): Promise<CertificateGenerationSummary[]> {
-  const codigoDocente = requireNonBlank(teacherCode, "El código docente es obligatorio");
-  const response = await safeFetch(
-    `${API_BASE_URL}/api/v1/constancias/docentes/${encodeURIComponent(codigoDocente)}`,
+  const codigoDocente = requireNonBlank(teacherCode, "El codigo docente es obligatorio");
+
+  return requestConstancia<CertificateGenerationSummary[]>(
+    `/api/v1/constancias/docentes/${encodeURIComponent(codigoDocente)}`,
     {
-      cache: "no-store",
+      validate: validateCertificateGenerationList,
     },
   );
-
-  return parseJsonResponse<CertificateGenerationSummary[]>(response);
 }
 
 export async function obtenerConstanciaPorGeneracion(
@@ -66,16 +55,15 @@ export async function obtenerConstanciaPorGeneracion(
 ): Promise<CertificateGenerationDetail> {
   const idGeneracion = requireNonBlank(
     generationId,
-    "El identificador de generación es obligatorio",
-  );
-  const response = await safeFetch(
-    `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}`,
-    {
-      cache: "no-store",
-    },
+    "El identificador de generacion es obligatorio",
   );
 
-  return parseJsonResponse<CertificateGenerationDetail>(response);
+  return requestConstancia<CertificateGenerationDetail>(
+    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}`,
+    {
+      validate: validateCertificateGenerationSummary,
+    },
+  );
 }
 
 export async function obtenerHistorialConstancia(
@@ -85,20 +73,19 @@ export async function obtenerHistorialConstancia(
     certificateKey,
     "La clave de constancia es obligatoria",
   );
-  const response = await safeFetch(
-    `${API_BASE_URL}/api/v1/constancias/certificados/${encodeURIComponent(claveConstancia)}/historial`,
+
+  return requestConstancia<CertificateHistoryItem[]>(
+    `/api/v1/constancias/certificados/${encodeURIComponent(claveConstancia)}/historial`,
     {
-      cache: "no-store",
+      validate: validateCertificateGenerationList,
     },
   );
-
-  return parseJsonResponse<CertificateHistoryItem[]>(response);
 }
 
 export function construirUrlVisualizacionPdf(generationId: string): string {
   const idGeneracion = requireNonBlank(
     generationId,
-    "El identificador de generación es obligatorio",
+    "El identificador de generacion es obligatorio",
   );
 
   return `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/pdf`;
@@ -107,60 +94,131 @@ export function construirUrlVisualizacionPdf(generationId: string): string {
 export function construirUrlDescargaPdf(generationId: string): string {
   const idGeneracion = requireNonBlank(
     generationId,
-    "El identificador de generación es obligatorio",
+    "El identificador de generacion es obligatorio",
   );
 
   return `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/download`;
 }
 
-async function safeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+async function requestConstancia<T>(
+  path: string,
+  options: HttpJsonOptions<T>,
+): Promise<T> {
   try {
-    return await fetch(input, init);
-  } catch {
-    throw new ConstanciaApiError(ERROR_CONEXION, 0);
+    return await httpJson<T>(path, {
+      ...options,
+      networkErrorMessage: ERROR_CONEXION,
+      defaultErrorMessage: ERROR_SOLICITUD,
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw toConstanciaApiError(error);
+    }
+
+    throw error;
   }
 }
 
-async function parseJsonResponse<T>(response: Response): Promise<T> {
-  if (response.ok) {
-    return response.json() as Promise<T>;
-  }
+function toConstanciaApiError(error: ApiError): ConstanciaApiError {
+  const payload = isRecord(error.payload) ? error.payload : null;
+  const missingFields = Array.isArray(payload?.missingFields)
+    ? payload.missingFields.filter((field): field is string => typeof field === "string")
+    : undefined;
+  const missingCourses = Array.isArray(payload?.missingCourses)
+    ? payload.missingCourses.filter(isMissingCourse)
+    : undefined;
 
-  const errorBody = await readErrorBody(response);
-  throw new ConstanciaApiError(
-    errorBody.message ?? ERROR_SOLICITUD,
-    response.status,
-    errorBody.missingFields,
-    errorBody.missingCourses,
+  return new ConstanciaApiError(
+    error.message || ERROR_SOLICITUD,
+    error.status,
+    missingFields,
+    missingCourses,
   );
 }
 
-async function readErrorBody(response: Response): Promise<ConstanciaApiErrorBody> {
-  try {
-    const data = (await response.json()) as ConstanciaApiErrorBody;
-    const message = typeof data.message === "string" && data.message.trim() !== ""
-      ? data.message
-      : undefined;
-    const missingFields = Array.isArray(data.missingFields)
-      ? data.missingFields.filter((field): field is string => typeof field === "string")
-      : undefined;
-    const missingCourses = Array.isArray(data.missingCourses)
-      ? data.missingCourses.filter(isMissingCourse)
-      : undefined;
-
-    return { message, missingFields, missingCourses };
-  } catch {
-    return { message: ERROR_SOLICITUD };
+function validateCourseCertificateResponse(payload: unknown): CourseCertificateResponse {
+  if (!isRecord(payload) || !hasCommonCertificateFields(payload)) {
+    throw new ApiError("La respuesta de generacion por curso no es valida.", 0);
   }
+
+  if (
+    typeof payload.teacherFullName !== "string" ||
+    typeof payload.courseCode !== "string" ||
+    typeof payload.courseSubject !== "string" ||
+    typeof payload.section !== "string"
+  ) {
+    throw new ApiError("La respuesta de generacion por curso no es valida.", 0);
+  }
+
+  return payload as CourseCertificateResponse;
 }
 
-function isMissingCourse(value: unknown): value is MissingCourse {
-  if (typeof value !== "object" || value === null) {
+function validateSemesterCertificateResponse(payload: unknown): SemesterCertificateResponse {
+  if (!isRecord(payload) || !hasCommonCertificateFields(payload) || payload.type !== "SEMESTRAL") {
+    throw new ApiError("La respuesta de generacion semestral no es valida.", 0);
+  }
+
+  if (
+    typeof payload.teacherCode !== "string" ||
+    typeof payload.teacherFullName !== "string" ||
+    typeof payload.courseCount !== "number" ||
+    !Array.isArray(payload.sourceGenerationIds) ||
+    !payload.sourceGenerationIds.every((id) => typeof id === "string")
+  ) {
+    throw new ApiError("La respuesta de generacion semestral no es valida.", 0);
+  }
+
+  return payload as SemesterCertificateResponse;
+}
+
+function validateCertificateGenerationList(payload: unknown): CertificateGenerationSummary[] {
+  if (!Array.isArray(payload) || !payload.every(validateCertificateGenerationSummaryShape)) {
+    throw new ApiError("La lista de constancias no tiene el formato esperado.", 0);
+  }
+
+  return payload as CertificateGenerationSummary[];
+}
+
+function validateCertificateGenerationSummary(payload: unknown): CertificateGenerationSummary {
+  if (!validateCertificateGenerationSummaryShape(payload)) {
+    throw new ApiError("La constancia no tiene el formato esperado.", 0);
+  }
+
+  return payload as CertificateGenerationSummary;
+}
+
+function validateCertificateGenerationSummaryShape(value: unknown): boolean {
+  if (!isRecord(value) || !hasCommonCertificateFields(value)) {
     return false;
   }
 
-  const course = value as Partial<MissingCourse>;
-  return typeof course.code === "string" && typeof course.section === "string";
+  return (
+    typeof value.teacherCode === "string" &&
+    (typeof value.courseCode === "string" || value.courseCode === null) &&
+    (typeof value.section === "string" || value.section === null)
+  );
+}
+
+function hasCommonCertificateFields(value: Record<string, unknown>): boolean {
+  return (
+    typeof value.generationId === "string" &&
+    typeof value.certificateKey === "string" &&
+    typeof value.version === "number" &&
+    (value.type === "CURSO" || value.type === "SEMESTRAL") &&
+    (value.status === "GENERADO" || value.status === "APROBADO") &&
+    typeof value.semester === "string" &&
+    typeof value.generatedAt === "string" &&
+    typeof value.viewUrl === "string" &&
+    typeof value.downloadUrl === "string"
+  );
+}
+
+function isMissingCourse(value: unknown): value is MissingCourse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return typeof value.code === "string" && typeof value.section === "string";
 }
 
 function requireNonBlank(value: string, message: string): string {
