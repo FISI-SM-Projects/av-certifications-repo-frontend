@@ -90,7 +90,11 @@ export function DirectorTeacherProfileView({ teacherCode }: DirectorTeacherProfi
         <ResumenConstanciasCard constancias={perfil.constancias} />
       </div>
 
-      <ConstanciasTable constancias={perfil.constancias} />
+      <ConstanciasTable
+        constancias={perfil.constancias}
+        detailReturnTo={`/director/docentes/${encodeURIComponent(teacherCode)}`}
+        emptyMessage="Este docente aun no tiene constancias generadas."
+      />
     </div>
   );
 }

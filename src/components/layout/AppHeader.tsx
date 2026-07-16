@@ -13,7 +13,7 @@ export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeade
   const { user, isLoading, isAuthenticated } = useAuth();
 
   return (
-    <header className="flex min-h-16 flex-col gap-3 border-b border-[var(--border)] bg-[rgba(20,29,24,0.92)] px-5 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
+    <header className="flex min-h-16 flex-col gap-3 border-b border-[var(--border)] bg-[rgba(59,10,24,0.92)] px-5 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
       <div>
         {breadcrumb !== undefined ? (
           <p className="text-xs text-[var(--muted)]">{breadcrumb}</p>

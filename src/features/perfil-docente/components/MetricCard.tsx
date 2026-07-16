@@ -7,7 +7,7 @@ type MetricCardProps = {
 const toneClass: Record<NonNullable<MetricCardProps["tone"]>, string> = {
   gold: "border-[rgba(201,168,93,0.38)] bg-[rgba(201,168,93,0.1)] text-[var(--gold-soft)]",
   green: "border-[rgba(79,155,97,0.42)] bg-[var(--green-soft)] text-[#b7efc1]",
-  neutral: "border-[var(--border-soft)] bg-[rgba(15,23,19,0.65)] text-[var(--text)]",
+  neutral: "border-[var(--border-soft)] bg-[rgba(27,5,12,0.65)] text-[var(--text)]",
 };
 
 export function MetricCard({ label, value, tone = "neutral" }: MetricCardProps) {
