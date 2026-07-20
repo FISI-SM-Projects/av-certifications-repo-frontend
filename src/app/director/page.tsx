@@ -1,6 +1,6 @@
-import { RequireRole } from "@/components/auth/RequireRole";
+import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
-import { DirectorDashboard } from "@/features/director/components/DirectorDashboard";
+import { DirectorDashboard } from "@/components/director/DirectorDashboard";
 
 export default function DirectorPage() {
   return (

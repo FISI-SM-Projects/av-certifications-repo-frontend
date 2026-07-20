@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/layout/AppShell";
-import { PerfilDocenteAccessGuard } from "@/features/perfil-docente/components/PerfilDocenteAccessGuard";
-import { TeacherProfileView } from "@/features/perfil-docente/components/TeacherProfileView";
+import { PerfilDocenteAccessGuard } from "@/components/docente/PerfilDocenteAccessGuard";
+import { TeacherProfileView } from "@/components/docente/TeacherProfileView";
 
 export default function PerfilDocentePage() {
   return (

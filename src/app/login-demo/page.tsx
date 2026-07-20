@@ -1,4 +1,4 @@
-import { DemoLoginSelector } from "@/features/auth/components/DemoLoginSelector";
+import { DemoLoginSelector } from "@/components/auth/DemoLoginSelector";
 
 export default function LoginDemoPage() {
   return (

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { LogoutButton } from "@/features/auth/components/LogoutButton";
-import { useAuth } from "@/features/auth/context/AuthProvider";
-import type { RolUsuario } from "@/features/auth/types/auth.types";
+import { LogoutButton } from "@/components/auth/LogoutButton";
+import { useAuth } from "@/context/auth/AuthProvider";
+import type { RolUsuario } from "@/types/auth/auth.types";
 
 type MenuItem = {
   label: string;

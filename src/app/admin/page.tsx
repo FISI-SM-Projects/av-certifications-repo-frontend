@@ -1,6 +1,6 @@
-import { RequireRole } from "@/components/auth/RequireRole";
+import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
-import { AdminDashboard } from "@/features/admin/components/AdminDashboard";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 
 export default function AdminPage() {
   return (

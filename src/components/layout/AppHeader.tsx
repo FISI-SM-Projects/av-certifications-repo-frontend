@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/features/auth/context/AuthProvider";
+import { useAuth } from "@/context/auth/AuthProvider";
 
 export type AppHeaderProps = {
   breadcrumb?: string;
