@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/context/auth/AuthProvider";
+import { isDemoMode } from "@/lib/uiMode";
 import type { RolUsuario } from "@/types/auth/auth.types";
 
 type RequireRoleProps = {
@@ -25,6 +26,8 @@ function LoadingState() {
 }
 
 function UnauthorizedState() {
+  const isDemo = isDemoMode();
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4 text-[var(--text)]">
       <section className="max-w-lg rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
@@ -42,7 +45,7 @@ function UnauthorizedState() {
             href="/login-demo"
             className="rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
           >
-            Volver al login demo
+            {isDemo ? "Volver al login demo" : "Volver al acceso"}
           </Link>
           <LogoutButton />
         </div>

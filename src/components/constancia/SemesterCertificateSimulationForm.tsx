@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 
+import { isDemoMode } from "@/lib/uiMode";
 import { generarConstanciaSemestral } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type {
@@ -33,6 +34,7 @@ export function SemesterCertificateSimulationForm({
   teacherCode,
   onGenerated,
 }: SemesterCertificateSimulationFormProps) {
+  const isDemo = isDemoMode();
   const [semester, setSemester] = useState("26.1");
   const [rows, setRows] = useState<ExpectedCourseFormRow[]>(INITIAL_ROWS);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -54,6 +56,9 @@ export function SemesterCertificateSimulationForm({
     || rows.length === 0
     || hasIncompleteRows
     || hasMissingCourses;
+  const rowGridClass = isDemo
+    ? "md:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto_auto]"
+    : "md:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto]";
 
   function updateRow(rowId: string, field: "code" | "section", value: string) {
     setRows((currentRows) =>
@@ -177,13 +182,15 @@ export function SemesterCertificateSimulationForm({
                 El estado encontrado/faltante se calcula con el listado actual visible.
               </p>
             </div>
-            <button
-              className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-              onClick={addRow}
-              type="button"
-            >
-              Agregar curso
-            </button>
+            {isDemo ? (
+              <button
+                className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+                onClick={addRow}
+                type="button"
+              >
+                Agregar curso
+              </button>
+            ) : null}
           </div>
 
           <div className="space-y-3">
@@ -191,7 +198,7 @@ export function SemesterCertificateSimulationForm({
               const status = rowStatuses.find((item) => item.rowId === row.id);
               return (
                 <div
-                  className="grid gap-3 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto_auto]"
+                  className={`grid gap-3 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 ${rowGridClass}`}
                   key={row.id}
                 >
                   <div className="space-y-2">
@@ -221,17 +228,19 @@ export function SemesterCertificateSimulationForm({
                   <div className="flex items-end">
                     <SemesterCourseStatusBadge found={Boolean(status?.found)} />
                   </div>
-                  <div className="flex items-end">
-                    <button
-                      aria-label={`Eliminar curso esperado ${row.code || row.id}`}
-                      className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={rows.length === 1}
-                      onClick={() => removeRow(row.id)}
-                      type="button"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
+                  {isDemo ? (
+                    <div className="flex items-end">
+                      <button
+                        aria-label={`Eliminar curso esperado ${row.code || row.id}`}
+                        className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={rows.length === 1}
+                        onClick={() => removeRow(row.id)}
+                        type="button"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

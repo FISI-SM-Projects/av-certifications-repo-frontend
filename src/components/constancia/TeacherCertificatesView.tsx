@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { useAuth } from "@/context/auth/AuthProvider";
 import { CourseCertificateSimulationForm } from "@/components/constancia/CourseCertificateSimulationForm";
 import { SemesterCertificateSimulationForm } from "@/components/constancia/SemesterCertificateSimulationForm";
+import { useAuth } from "@/context/auth/AuthProvider";
+import { isDemoMode } from "@/lib/uiMode";
 import {
   construirUrlDescargaPdf,
   listarConstanciasDocente,
@@ -25,6 +26,7 @@ type SummaryItem = {
 
 export function TeacherCertificatesView() {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const isDemo = isDemoMode();
   const teacherCode = obtenerTeacherCodeDeSesion(user);
   const [certificates, setCertificates] = useState<CertificateGenerationSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,14 +73,14 @@ export function TeacherCertificatesView() {
   const summary = useMemo(() => buildSummary(certificates), [certificates]);
 
   if (isAuthLoading) {
-    return <PanelMessage message="Verificando sesión..." />;
+    return <PanelMessage message="Verificando sesion..." />;
   }
 
   if (teacherCode === null || user === null) {
     return (
       <PanelMessage
-        eyebrow="Sesión sin código docente"
-        title="La sesión actual no tiene un código docente asociado."
+        eyebrow="Sesion sin codigo docente"
+        title="La sesion actual no tiene un codigo docente asociado."
         message="La consulta personal de constancias requiere un usuario con teacherCode."
       />
     );
@@ -88,25 +90,29 @@ export function TeacherCertificatesView() {
     <section className="space-y-5">
       <div className="flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)] md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-            Aula Virtual simulada
-          </p>
+          {isDemo ? (
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
+              Aula Virtual simulada
+            </p>
+          ) : null}
           <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">
             Constancias visibles
           </h2>
           <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-            Se muestran las últimas versiones disponibles para el código docente{" "}
+            Se muestran las ultimas versiones disponibles para el codigo docente{" "}
             <span className="font-semibold text-[var(--gold-soft)]">{teacherCode}</span>.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button
-            className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-            onClick={() => setIsSimulationFormOpen(true)}
-            type="button"
-          >
-            Simular recepción desde Aula Virtual
-          </button>
+          {isDemo ? (
+            <button
+              className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              onClick={() => setIsSimulationFormOpen(true)}
+              type="button"
+            >
+              Simular recepcion desde Aula Virtual
+            </button>
+          ) : null}
           <button
             className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isLoading}
@@ -118,7 +124,7 @@ export function TeacherCertificatesView() {
         </div>
       </div>
 
-      {isSimulationFormOpen ? (
+      {isDemo && isSimulationFormOpen ? (
         <CourseCertificateSimulationForm
           onCancel={() => setIsSimulationFormOpen(false)}
           onGenerated={loadCertificates}
@@ -155,8 +161,12 @@ export function TeacherCertificatesView() {
       {!isLoading && errorMessage === null && certificates.length === 0 ? (
         <PanelMessage
           eyebrow="Sin constancias"
-          title="Aún no tienes constancias generadas."
-          message="Las constancias aparecerán aquí cuando sean generadas desde la simulación de Aula Virtual."
+          title="Aun no tienes constancias generadas."
+          message={
+            isDemo
+              ? "Las constancias apareceran aqui cuando sean generadas desde la simulacion de Aula Virtual."
+              : "Las constancias apareceran aqui cuando esten disponibles para tu perfil."
+          }
         />
       ) : null}
 
@@ -215,7 +225,7 @@ function CertificatesTable({
       <div className="border-b border-[var(--border)] px-5 py-4">
         <h3 className="text-lg font-semibold text-[var(--text)]">Listado de constancias</h3>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Cada registro corresponde a la última versión visible de una constancia lógica.
+          Cada registro corresponde a la ultima version visible de una constancia logica.
         </p>
       </div>
 
@@ -225,10 +235,10 @@ function CertificatesTable({
             <tr>
               <th className="px-5 py-3 font-semibold">Tipo</th>
               <th className="px-5 py-3 font-semibold">Curso</th>
-              <th className="px-5 py-3 font-semibold">Sección</th>
+              <th className="px-5 py-3 font-semibold">Seccion</th>
               <th className="px-5 py-3 font-semibold">Semestre</th>
               <th className="px-5 py-3 font-semibold">Estado</th>
-              <th className="px-5 py-3 font-semibold">Versión</th>
+              <th className="px-5 py-3 font-semibold">Version</th>
               <th className="px-5 py-3 font-semibold">Fecha</th>
               <th className="px-5 py-3 font-semibold">Acciones</th>
             </tr>

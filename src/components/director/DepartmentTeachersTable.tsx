@@ -4,14 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/context/auth/AuthProvider";
+import { isDemoMode } from "@/lib/uiMode";
 import { obtenerDocentesPorDepartamento } from "@/services/director/directorService";
 import type { DirectorDocenteListado } from "@/types/director/director.types";
 
-const DEPARTAMENTO_ADMIN_DEMO = "Ingeniería de Software";
+const DEPARTAMENTO_ADMIN_DEMO = "Ingenieria de Software";
 
 function obtenerDepartamentoConsulta(
   role: string | undefined,
   departamentoAcademico: string | null | undefined,
+  isDemo: boolean,
 ): { departamento: string | null; nota: string | null } {
   if (departamentoAcademico !== null && departamentoAcademico !== undefined) {
     return { departamento: departamentoAcademico, nota: null };
@@ -20,24 +22,28 @@ function obtenerDepartamentoConsulta(
   if (role === "ADMIN") {
     return {
       departamento: DEPARTAMENTO_ADMIN_DEMO,
-      nota: "Vista demo de ADMIN usando Ingeniería de Software hasta completar el panel administrativo.",
+      nota: isDemo
+        ? "Vista demo de ADMIN usando Ingenieria de Software hasta completar el panel administrativo."
+        : "Vista de ADMIN usando Ingenieria de Software hasta completar el panel administrativo.",
     };
   }
 
   return {
     departamento: null,
-    nota: "No hay Departamento Académico asociado a la sesión actual.",
+    nota: "No hay Departamento Academico asociado a la sesion actual.",
   };
 }
 
 export function DepartmentTeachersTable() {
   const { user } = useAuth();
+  const isDemo = isDemoMode();
   const [docentes, setDocentes] = useState<DirectorDocenteListado[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { departamento, nota } = obtenerDepartamentoConsulta(
     user?.role,
     user?.departamentoAcademico,
+    isDemo,
   );
 
   useEffect(() => {
@@ -120,12 +126,12 @@ export function DepartmentTeachersTable() {
           <table className="w-full min-w-[780px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--border)] bg-[rgba(90,15,36,0.88)] text-[var(--muted)]">
-                <th className="px-5 py-3 font-semibold">Código</th>
+                <th className="px-5 py-3 font-semibold">Codigo</th>
                 <th className="px-5 py-3 font-semibold">Docente</th>
                 <th className="px-5 py-3 font-semibold">Correo</th>
-                <th className="px-5 py-3 font-semibold">Categoría</th>
-                <th className="px-5 py-3 font-semibold">Condición</th>
-                <th className="px-5 py-3 text-right font-semibold">Acción</th>
+                <th className="px-5 py-3 font-semibold">Categoria</th>
+                <th className="px-5 py-3 font-semibold">Condicion</th>
+                <th className="px-5 py-3 text-right font-semibold">Accion</th>
               </tr>
             </thead>
             <tbody>
@@ -147,8 +153,8 @@ export function DepartmentTeachersTable() {
                   <td className="px-5 py-4 text-[var(--muted)]">{docente.condicion}</td>
                   <td className="px-5 py-4 text-right">
                     <Link
-                      href={`/director/docentes/${docente.teacherCode}`}
                       className="inline-flex rounded-md border border-[rgba(201,168,93,0.35)] bg-[rgba(201,168,93,0.08)] px-3 py-2 text-xs font-semibold text-[var(--gold-soft)] transition hover:border-[var(--gold)]"
+                      href={`/director/docentes/${docente.teacherCode}`}
                     >
                       Ver perfil
                     </Link>

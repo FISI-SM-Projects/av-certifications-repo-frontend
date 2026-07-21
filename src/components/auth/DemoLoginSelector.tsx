@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/context/auth/AuthProvider";
+import { isDemoMode } from "@/lib/uiMode";
 import { loginDemo, obtenerUsuariosDemo } from "@/services/auth/authService";
 import type { RolUsuario, UsuarioSesion } from "@/types/auth/auth.types";
-import { LogoutButton } from "@/components/auth/LogoutButton";
 
 function obtenerRutaPorRol(role: RolUsuario): string {
   if (role === "DOCENTE") {
@@ -35,6 +36,7 @@ function etiquetaTeacherCode(usuario: UsuarioSesion): string {
 export function DemoLoginSelector() {
   const router = useRouter();
   const { user, isLoading: isAuthLoading, isAuthenticated, login } = useAuth();
+  const isDemo = isDemoMode();
   const [usuarios, setUsuarios] = useState<UsuarioSesion[]>([]);
   const [selectedEmail, setSelectedEmail] = useState("");
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
@@ -63,7 +65,7 @@ export function DemoLoginSelector() {
           return;
         }
 
-        setLoadError(error instanceof Error ? error.message : "No se pudieron cargar los usuarios demo");
+        setLoadError(error instanceof Error ? error.message : "No se pudieron cargar los usuarios");
       } finally {
         if (isMounted) {
           setIsLoadingUsers(false);
@@ -105,10 +107,14 @@ export function DemoLoginSelector() {
       login(response.user);
 
       const destino = obtenerRutaPorRol(response.user.role);
-      setSuccessMessage(`Sesión simulada iniciada. Redirigiendo a ${destino}...`);
+      setSuccessMessage(
+        isDemo
+          ? `Sesion simulada iniciada. Redirigiendo a ${destino}...`
+          : `Sesion iniciada. Redirigiendo a ${destino}...`,
+      );
       router.push(destino);
     } catch (error) {
-      setLoginError(error instanceof Error ? error.message : "No se pudo iniciar la sesión demo");
+      setLoginError(error instanceof Error ? error.message : "No se pudo iniciar la sesion");
     } finally {
       setIsLoggingIn(false);
     }
@@ -117,7 +123,7 @@ export function DemoLoginSelector() {
   if (isAuthLoading) {
     return (
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6">
-        <p className="text-sm text-[var(--muted)]">Cargando sesión local...</p>
+        <p className="text-sm text-[var(--muted)]">Cargando sesion local...</p>
       </section>
     );
   }
@@ -126,7 +132,7 @@ export function DemoLoginSelector() {
     return (
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-          Sesión activa
+          Sesion activa
         </p>
         <h2 className="mt-3 text-2xl font-semibold text-[var(--text)]">
           Ya ingresaste como {user.fullName}
@@ -142,9 +148,9 @@ export function DemoLoginSelector() {
         </div>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
-            type="button"
-            onClick={continuarConSesionActiva}
             className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+            onClick={continuarConSesionActiva}
+            type="button"
           >
             Continuar
           </button>
@@ -158,20 +164,21 @@ export function DemoLoginSelector() {
     <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-          Acceso de demostración
+          {isDemo ? "Acceso de demostracion" : "Acceso"}
         </p>
         <h2 className="mt-3 text-2xl font-semibold text-[var(--text)]">
-          Selecciona un usuario demo
+          {isDemo ? "Selecciona un usuario demo" : "Selecciona tu usuario"}
         </h2>
-        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-          Esta pantalla valida navegación por rol con una sesión local simulada. No usa contraseñas,
-          tokens ni seguridad real.
-        </p>
+        {isDemo ? (
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+            Esta pantalla valida navegacion por rol con una sesion local simulada. No usa contrasenas, tokens ni seguridad real.
+          </p>
+        ) : null}
       </div>
 
       {isLoadingUsers ? (
         <div className="mt-6 rounded-md border border-[var(--border-soft)] bg-[var(--surface-muted)] p-4 text-sm text-[var(--muted)]">
-          Cargando usuarios demo...
+          {isDemo ? "Cargando usuarios demo..." : "Cargando usuarios..."}
         </div>
       ) : null}
 
@@ -188,18 +195,18 @@ export function DemoLoginSelector() {
 
             return (
               <button
-                key={usuario.email}
-                type="button"
-                onClick={() => {
-                  setSelectedEmail(usuario.email);
-                  setLoginError(null);
-                  setSuccessMessage(null);
-                }}
                 className={`w-full rounded-lg border p-4 text-left transition ${
                   isSelected
                     ? "border-[var(--gold)] bg-[rgba(201,168,93,0.10)]"
                     : "border-[var(--border-soft)] bg-[var(--surface-muted)] hover:border-[var(--guinda-soft)]"
                 }`}
+                key={usuario.email}
+                onClick={() => {
+                  setSelectedEmail(usuario.email);
+                  setLoginError(null);
+                  setSuccessMessage(null);
+                }}
+                type="button"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -212,7 +219,7 @@ export function DemoLoginSelector() {
                 </div>
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                   <div>
-                    <dt className="text-[var(--muted)]">Departamento académico</dt>
+                    <dt className="text-[var(--muted)]">Departamento academico</dt>
                     <dd className="mt-1 text-[var(--text)]">{etiquetaDepartamento(usuario)}</dd>
                   </div>
                   <div>
@@ -239,12 +246,12 @@ export function DemoLoginSelector() {
       ) : null}
 
       <button
-        type="button"
-        onClick={handleLogin}
-        disabled={selectedUser === null || isLoggingIn || isLoadingUsers}
         className="mt-6 w-full rounded-md bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={selectedUser === null || isLoggingIn || isLoadingUsers}
+        onClick={handleLogin}
+        type="button"
       >
-        {isLoggingIn ? "Iniciando sesión..." : "Ingresar con usuario seleccionado"}
+        {isLoggingIn ? "Iniciando sesion..." : "Ingresar con usuario seleccionado"}
       </button>
     </section>
   );
