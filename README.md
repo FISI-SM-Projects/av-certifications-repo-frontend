@@ -20,6 +20,11 @@ El frontend queda disponible por defecto en:
 http://localhost:3000
 ```
 
+## Configuracion
+
+- `NEXT_PUBLIC_API_URL`: URL del backend.
+- `NEXT_PUBLIC_UI_MODE`: usar `demo` para desarrollo y simulacion, o `production` para una interfaz limpia de usuario final.
+
 ## Estructura
 
 `src/app/`
