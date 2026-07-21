@@ -1,27 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { CertificateSummaryTable } from "@/components/constancia/CertificateSummaryTable";
 import { CourseCertificateSimulationForm } from "@/components/constancia/CourseCertificateSimulationForm";
 import { SemesterCertificateSimulationForm } from "@/components/constancia/SemesterCertificateSimulationForm";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { isDemoMode } from "@/lib/uiMode";
-import {
-  construirUrlDescargaPdf,
-  listarConstanciasDocente,
-} from "@/services/constancia/constanciaService";
+import { listarConstanciasDocente } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
-import type {
-  CertificateGenerationSummary,
-  EstadoConstancia,
-} from "@/types/constancia/constancia.types";
+import type { CertificateGenerationSummary } from "@/types/constancia/constancia.types";
 import { obtenerTeacherCodeDeSesion } from "@/utils/constancia/sessionTeacher";
-import { formatDateTimeInLima } from "@/utils/dates";
 
 type SummaryItem = {
   label: string;
-  value: number;
+  value: number | string;
 };
 
 export function TeacherCertificatesView() {
@@ -88,41 +81,44 @@ export function TeacherCertificatesView() {
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)] md:flex-row md:items-center md:justify-between">
-        <div>
-          {isDemo ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-              Aula Virtual simulada
+      <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-3xl">
+            {isDemo ? (
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
+                Aula Virtual simulada
+              </p>
+            ) : null}
+            <h2 className="mt-1 text-2xl font-semibold text-[var(--text)]">Mis constancias</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+              Consulta, visualizacion y descarga de constancias generadas.
             </p>
-          ) : null}
-          <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">
-            Constancias visibles
-          </h2>
-          <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-            Se muestran las ultimas versiones disponibles para el codigo docente{" "}
-            <span className="font-semibold text-[var(--gold-soft)]">{teacherCode}</span>.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          {isDemo ? (
+            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
+              Se muestran las ultimas versiones disponibles para el codigo docente{" "}
+              <span className="font-semibold text-[var(--gold-soft)]">{teacherCode}</span>.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
+            {isDemo ? (
+              <button
+                className="min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+                onClick={() => setIsSimulationFormOpen(true)}
+                type="button"
+              >
+                Simular recepcion desde Aula Virtual
+              </button>
+            ) : null}
             <button
-              className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-              onClick={() => setIsSimulationFormOpen(true)}
+              className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isLoading}
+              onClick={loadCertificates}
               type="button"
             >
-              Simular recepcion desde Aula Virtual
+              {isLoading ? "Actualizando..." : "Actualizar"}
             </button>
-          ) : null}
-          <button
-            className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isLoading}
-            onClick={loadCertificates}
-            type="button"
-          >
-            {isLoading ? "Actualizando..." : "Actualizar"}
-          </button>
+          </div>
         </div>
-      </div>
+      </section>
 
       {isDemo && isSimulationFormOpen ? (
         <CourseCertificateSimulationForm
@@ -148,7 +144,7 @@ export function TeacherCertificatesView() {
           message={errorMessage}
           action={
             <button
-              className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              className="min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
               onClick={loadCertificates}
               type="button"
             >
@@ -172,8 +168,18 @@ export function TeacherCertificatesView() {
 
       {!isLoading && errorMessage === null && certificates.length > 0 ? (
         <>
-          <SummaryGrid items={summary} />
-          <CertificatesTable certificates={certificates} />
+          <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_14px_36px_rgba(0,0,0,0.14)]">
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
+                Resumen de constancias
+              </p>
+              <h3 className="mt-1 text-lg font-semibold text-[var(--text)]">
+                Ultimas versiones visibles
+              </h3>
+            </div>
+            <SummaryGrid items={summary} />
+          </section>
+          <CertificateSummaryTable certificates={certificates} />
         </>
       ) : null}
     </section>
@@ -182,9 +188,10 @@ export function TeacherCertificatesView() {
 
 function buildSummary(certificates: CertificateGenerationSummary[]): SummaryItem[] {
   const periodos = new Set(certificates.map((certificate) => certificate.semester));
+  const latestSemester = certificates[0]?.semester ?? "Sin semestre";
 
   return [
-    { label: "Total visibles", value: certificates.length },
+    { label: "Visibles", value: certificates.length },
     {
       label: "Generadas",
       value: certificates.filter((certificate) => certificate.status === "GENERADO").length,
@@ -194,112 +201,25 @@ function buildSummary(certificates: CertificateGenerationSummary[]): SummaryItem
       value: certificates.filter((certificate) => certificate.status === "APROBADO").length,
     },
     { label: "Periodos", value: periodos.size },
+    { label: "Semestre", value: latestSemester },
   ];
 }
 
 function SummaryGrid({ items }: { items: SummaryItem[] }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {items.map((item) => (
         <article
-          className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
+          className="rounded-md border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4"
           key={item.label}
         >
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
             {item.label}
           </p>
-          <p className="mt-3 text-3xl font-semibold text-[var(--gold-soft)]">{item.value}</p>
+          <p className="mt-3 break-words text-2xl font-semibold text-[var(--gold-soft)]">{item.value}</p>
         </article>
       ))}
     </div>
-  );
-}
-
-function CertificatesTable({
-  certificates,
-}: {
-  certificates: CertificateGenerationSummary[];
-}) {
-  return (
-    <section className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
-      <div className="border-b border-[var(--border)] px-5 py-4">
-        <h3 className="text-lg font-semibold text-[var(--text)]">Listado de constancias</h3>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          Cada registro corresponde a la ultima version visible de una constancia logica.
-        </p>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-[var(--surface-soft)] text-xs uppercase tracking-[0.12em] text-[var(--muted)]">
-            <tr>
-              <th className="px-5 py-3 font-semibold">Tipo</th>
-              <th className="px-5 py-3 font-semibold">Curso</th>
-              <th className="px-5 py-3 font-semibold">Seccion</th>
-              <th className="px-5 py-3 font-semibold">Semestre</th>
-              <th className="px-5 py-3 font-semibold">Estado</th>
-              <th className="px-5 py-3 font-semibold">Version</th>
-              <th className="px-5 py-3 font-semibold">Fecha</th>
-              <th className="px-5 py-3 font-semibold">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--border-soft)]">
-            {certificates.map((certificate) => (
-              <tr className="align-top" key={certificate.generationId}>
-                <td className="px-5 py-4 font-medium text-[var(--text)]">{certificate.type}</td>
-                <td className="px-5 py-4 text-[var(--text)]">
-                  {certificate.courseCode ?? "Constancia semestral"}
-                </td>
-                <td className="px-5 py-4 text-[var(--muted)]">
-                  {certificate.section ?? "No aplica"}
-                </td>
-                <td className="px-5 py-4 text-[var(--muted)]">{certificate.semester}</td>
-                <td className="px-5 py-4">
-                  <CertificateStatusBadge status={certificate.status} />
-                </td>
-                <td className="px-5 py-4 text-[var(--muted)]">
-                  v{String(certificate.version).padStart(3, "0")}
-                </td>
-                <td className="px-5 py-4 text-[var(--muted)]">
-                  {formatDateTimeInLima(certificate.generatedAt)}
-                </td>
-                <td className="px-5 py-4">
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Link
-                      className="rounded-md border border-[var(--border)] px-3 py-2 text-center text-xs font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-                      href={`/constancias/${encodeURIComponent(certificate.generationId)}`}
-                    >
-                      Ver detalle
-                    </Link>
-                    <a
-                      className="rounded-md bg-[var(--gold)] px-3 py-2 text-center text-xs font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-                      download
-                      href={construirUrlDescargaPdf(certificate.generationId)}
-                    >
-                      Descargar
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-function CertificateStatusBadge({ status }: { status: EstadoConstancia }) {
-  const className =
-    status === "APROBADO"
-      ? "border-[rgba(79,155,97,0.55)] bg-[rgba(79,155,97,0.16)] text-[#b8f0c4]"
-      : "border-[rgba(201,168,93,0.55)] bg-[rgba(201,168,93,0.14)] text-[var(--gold-soft)]";
-  const label = status === "APROBADO" ? "Aprobado" : "Generado";
-
-  return (
-    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${className}`}>
-      {label}
-    </span>
   );
 }
 
@@ -315,7 +235,11 @@ function PanelMessage({
   action?: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+    <section
+      aria-live="polite"
+      className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+      role={title ? "alert" : "status"}
+    >
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
           {eyebrow}

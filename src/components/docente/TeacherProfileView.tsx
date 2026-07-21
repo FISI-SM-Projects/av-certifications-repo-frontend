@@ -101,12 +101,8 @@ export function TeacherProfileView() {
   return (
     <div className="space-y-5">
       <PerfilDocenteHeader docente={perfil.docente} />
-
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]">
-        <DatosDocenteCard docente={perfil.docente} />
-        <ResumenConstanciasCard constancias={perfil.constancias} />
-      </div>
-
+      <DatosDocenteCard docente={perfil.docente} />
+      <ResumenConstanciasCard constancias={perfil.constancias} />
       <ConstanciasTable
         constancias={perfil.constancias}
         detailReturnTo="/perfil-docente"

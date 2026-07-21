@@ -19,7 +19,7 @@ type CertificateSummaryTableProps = {
 export function CertificateSummaryTable({
   certificates,
   detailReturnTo,
-  emptyMessage = "Aún no tienes constancias generadas.",
+  emptyMessage = "Aun no tienes constancias generadas.",
   showTeacherCode = false,
 }: CertificateSummaryTableProps) {
   if (certificates.length === 0) {
@@ -35,33 +35,33 @@ export function CertificateSummaryTable({
       <div className="border-b border-[var(--border)] px-5 py-4">
         <h3 className="text-lg font-semibold text-[var(--text)]">Listado de constancias</h3>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Cada registro corresponde a la última versión visible de una constancia lógica.
+          Cada registro corresponde a la ultima version visible de una constancia logica.
         </p>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
+        <table className="min-w-[940px] border-collapse text-left text-sm">
           <thead className="bg-[var(--surface-soft)] text-xs uppercase tracking-[0.12em] text-[var(--muted)]">
             <tr>
-              <th className="px-5 py-3 font-semibold">Tipo</th>
-              {showTeacherCode ? <th className="px-5 py-3 font-semibold">Código docente</th> : null}
-              <th className="px-5 py-3 font-semibold">Curso</th>
-              <th className="px-5 py-3 font-semibold">Sección</th>
-              <th className="px-5 py-3 font-semibold">Semestre</th>
-              <th className="px-5 py-3 font-semibold">Estado</th>
-              <th className="px-5 py-3 font-semibold">Versión</th>
-              <th className="px-5 py-3 font-semibold">Fecha</th>
-              <th className="px-5 py-3 font-semibold">Acciones</th>
+              <th className="w-28 px-5 py-3 font-semibold">Tipo</th>
+              {showTeacherCode ? <th className="w-36 px-5 py-3 font-semibold">Codigo docente</th> : null}
+              <th className="min-w-44 px-5 py-3 font-semibold">Curso</th>
+              <th className="w-28 px-5 py-3 font-semibold">Seccion</th>
+              <th className="w-28 px-5 py-3 font-semibold">Semestre</th>
+              <th className="w-32 px-5 py-3 font-semibold">Estado</th>
+              <th className="w-24 px-5 py-3 font-semibold">Version</th>
+              <th className="w-40 px-5 py-3 font-semibold">Fecha</th>
+              <th className="w-48 px-5 py-3 font-semibold">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-soft)]">
             {certificates.map((certificate) => (
-              <tr className="align-top" key={certificate.generationId}>
+              <tr className="align-top transition hover:bg-[rgba(90,15,36,0.28)]" key={certificate.generationId}>
                 <td className="px-5 py-4 font-medium text-[var(--text)]">{certificate.type}</td>
                 {showTeacherCode ? (
                   <td className="px-5 py-4 text-[var(--muted)]">{certificate.teacherCode}</td>
                 ) : null}
-                <td className="px-5 py-4 text-[var(--text)]">
+                <td className="px-5 py-4 font-medium text-[var(--text)]">
                   {certificate.courseCode ?? "Constancia semestral"}
                 </td>
                 <td className="px-5 py-4 text-[var(--muted)]">
@@ -80,13 +80,13 @@ export function CertificateSummaryTable({
                 <td className="px-5 py-4">
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <Link
-                      className="rounded-md border border-[var(--border)] px-3 py-2 text-center text-xs font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+                      className="inline-flex min-h-10 items-center justify-center rounded-md border border-[var(--border)] px-3 py-2 text-center text-xs font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
                       href={buildDetailHref(certificate.generationId, detailReturnTo)}
                     >
                       Ver detalle
                     </Link>
                     <a
-                      className="rounded-md bg-[var(--gold)] px-3 py-2 text-center text-xs font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+                      className="inline-flex min-h-10 items-center justify-center rounded-md bg-[var(--gold)] px-3 py-2 text-center text-xs font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
                       download
                       href={construirUrlDescargaPdf(certificate.generationId)}
                     >

@@ -136,21 +136,41 @@ export function SemesterCertificateSimulationForm({
   return (
     <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
       <div className="border-b border-[var(--border-soft)] pb-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-          Consolidación semestral
-        </p>
-        <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">Constancia semestral</h3>
-        <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-          Genera una constancia consolidada cuando todos los cursos esperados tengan una
-          constancia por curso.
-        </p>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
+              Consolidacion semestral
+            </p>
+            <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">Constancia semestral</h3>
+            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
+              Genera una constancia consolidada cuando todos los cursos tengan su constancia por curso.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 lg:max-w-md lg:justify-end">
+            {rows.map((row) => {
+              const status = rowStatuses.find((item) => item.rowId === row.id);
+              return (
+                <span
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--text)]"
+                  key={`chip-${row.id}`}
+                >
+                  <span>{row.code || "Curso"}</span>
+                  <span className="text-[var(--muted)]">sec. {row.section || "-"}</span>
+                  <span className={Boolean(status?.found) ? "text-[#b8f0c4]" : "text-[#f0b8b8]"}>
+                    {Boolean(status?.found) ? "Encontrado" : "Faltante"}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <form className="mt-5 space-y-5" onSubmit={handleSubmit}>
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-[var(--text)]" htmlFor="semester-teacher-code">
-              Código docente
+              Codigo docente
             </label>
             <input
               className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] read-only:cursor-not-allowed read-only:opacity-75"
@@ -178,13 +198,15 @@ export function SemesterCertificateSimulationForm({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h4 className="text-base font-semibold text-[var(--text)]">Cursos esperados</h4>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                El estado encontrado/faltante se calcula con el listado actual visible.
-              </p>
+              {isDemo ? (
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  El estado encontrado/faltante se calcula con el listado actual visible.
+                </p>
+              ) : null}
             </div>
             {isDemo ? (
               <button
-                className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+                className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
                 onClick={addRow}
                 type="button"
               >
@@ -203,7 +225,7 @@ export function SemesterCertificateSimulationForm({
                 >
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[var(--text)]" htmlFor={`${row.id}-code`}>
-                      Código
+                      Codigo
                     </label>
                     <input
                       className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)]"
@@ -215,7 +237,7 @@ export function SemesterCertificateSimulationForm({
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[var(--text)]" htmlFor={`${row.id}-section`}>
-                      Sección
+                      Seccion
                     </label>
                     <input
                       className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)]"
@@ -232,7 +254,7 @@ export function SemesterCertificateSimulationForm({
                     <div className="flex items-end">
                       <button
                         aria-label={`Eliminar curso esperado ${row.code || row.id}`}
-                        className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="min-h-10 rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={rows.length === 1}
                         onClick={() => removeRow(row.id)}
                         type="button"
@@ -250,7 +272,7 @@ export function SemesterCertificateSimulationForm({
         <div aria-live="polite" className="space-y-3">
           {semester.trim() === "" || hasIncompleteRows ? (
             <FeedbackPanel
-              message="Completa el semestre, el código y la sección de cada curso esperado para continuar."
+              message="Completa el semestre, el codigo y la seccion de cada curso esperado para continuar."
               title="Datos pendientes"
               tone="warning"
             />
@@ -275,7 +297,7 @@ export function SemesterCertificateSimulationForm({
 
           {errorMessage ? (
             <FeedbackPanel
-              items={missingCourses.map((course) => `${course.code}, sección ${course.section}`)}
+              items={missingCourses.map((course) => `${course.code}, seccion ${course.section}`)}
               message={errorMessage}
               title="No se pudo generar la constancia semestral"
               tone="error"
@@ -286,12 +308,12 @@ export function SemesterCertificateSimulationForm({
             <FeedbackPanel
               items={[
                 `ID: ${successResponse.generationId}`,
-                `Versión: v${String(successResponse.version).padStart(3, "0")}`,
+                `Version: v${String(successResponse.version).padStart(3, "0")}`,
                 `Cursos: ${successResponse.courseCount}`,
                 `Estado: ${successResponse.status}`,
               ]}
               message="Constancia semestral generada correctamente."
-              title="Generación exitosa"
+              title="Generacion exitosa"
               tone="success"
             />
           ) : null}
@@ -299,7 +321,7 @@ export function SemesterCertificateSimulationForm({
 
         <div className="flex justify-end border-t border-[var(--border-soft)] pt-5">
           <button
-            className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             disabled={isSubmitDisabled}
             type="submit"
           >
@@ -342,7 +364,7 @@ function validateForm(
   const errors: string[] = [];
 
   if (teacherCode.trim() === "") {
-    errors.push("La sesión actual no tiene código docente.");
+    errors.push("La sesion actual no tiene codigo docente.");
   }
   if (semester.trim() === "") {
     errors.push("El semestre es obligatorio.");
@@ -353,10 +375,10 @@ function validateForm(
 
   rows.forEach((row, index) => {
     if (row.code.trim() === "") {
-      errors.push(`Curso ${index + 1}: el código es obligatorio.`);
+      errors.push(`Curso ${index + 1}: el codigo es obligatorio.`);
     }
     if (row.section.trim() === "") {
-      errors.push(`Curso ${index + 1}: la sección es obligatoria.`);
+      errors.push(`Curso ${index + 1}: la seccion es obligatoria.`);
     }
   });
 
