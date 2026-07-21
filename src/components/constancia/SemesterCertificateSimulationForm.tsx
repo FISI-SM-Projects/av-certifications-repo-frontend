@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 
+import { DemoOnly } from "@/components/demo/DemoOnly";
 import { isDemoMode } from "@/lib/uiMode";
 import { generarConstanciaSemestral } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
@@ -198,13 +199,13 @@ export function SemesterCertificateSimulationForm({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h4 className="text-base font-semibold text-[var(--text)]">Cursos esperados</h4>
-              {isDemo ? (
+              <DemoOnly>
                 <p className="mt-1 text-sm text-[var(--muted)]">
                   El estado encontrado/faltante se calcula con el listado actual visible.
                 </p>
-              ) : null}
+              </DemoOnly>
             </div>
-            {isDemo ? (
+            <DemoOnly>
               <button
                 className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
                 onClick={addRow}
@@ -212,7 +213,7 @@ export function SemesterCertificateSimulationForm({
               >
                 Agregar curso
               </button>
-            ) : null}
+            </DemoOnly>
           </div>
 
           <div className="space-y-3">
@@ -250,7 +251,7 @@ export function SemesterCertificateSimulationForm({
                   <div className="flex items-end">
                     <SemesterCourseStatusBadge found={Boolean(status?.found)} />
                   </div>
-                  {isDemo ? (
+                  <DemoOnly>
                     <div className="flex items-end">
                       <button
                         aria-label={`Eliminar curso esperado ${row.code || row.id}`}
@@ -262,7 +263,7 @@ export function SemesterCertificateSimulationForm({
                         Eliminar
                       </button>
                     </div>
-                  ) : null}
+                  </DemoOnly>
                 </div>
               );
             })}

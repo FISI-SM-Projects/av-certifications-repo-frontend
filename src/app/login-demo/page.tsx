@@ -1,4 +1,5 @@
 import { DemoLoginSelector } from "@/components/auth/DemoLoginSelector";
+import { DemoOnly } from "@/components/demo/DemoOnly";
 import { isDemoMode } from "@/lib/uiMode";
 
 export default function LoginDemoPage() {
@@ -20,11 +21,11 @@ export default function LoginDemoPage() {
                 ? "Usa usuarios demo para validar el flujo de rol, departamento academico y redireccion inicial."
                 : "Ingresa con una cuenta habilitada para continuar."}
             </p>
-            {isDemo ? (
+            <DemoOnly>
               <div className="mt-6 rounded-md border border-[var(--border)] bg-[var(--background-deep)] p-4 text-sm text-[var(--muted)]">
                 Esta sesion es solo funcional para desarrollo. No representa seguridad real ni reemplaza LDAP, JWT o Spring Security.
               </div>
-            ) : null}
+            </DemoOnly>
           </section>
 
           <DemoLoginSelector />

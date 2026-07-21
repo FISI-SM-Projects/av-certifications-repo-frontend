@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { DemoOnly } from "@/components/demo/DemoOnly";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { isDemoMode } from "@/lib/uiMode";
 import { loginDemo, obtenerUsuariosDemo } from "@/services/auth/authService";
@@ -169,11 +170,11 @@ export function DemoLoginSelector() {
         <h2 className="mt-3 text-2xl font-semibold text-[var(--text)]">
           {isDemo ? "Selecciona un usuario demo" : "Selecciona tu usuario"}
         </h2>
-        {isDemo ? (
+        <DemoOnly>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
             Esta pantalla valida navegacion por rol con una sesion local simulada. No usa contrasenas, tokens ni seguridad real.
           </p>
-        ) : null}
+        </DemoOnly>
       </div>
 
       {isLoadingUsers ? (

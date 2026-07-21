@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { CertificateSummaryTable } from "@/components/constancia/CertificateSummaryTable";
-import { CourseCertificateSimulationForm } from "@/components/constancia/CourseCertificateSimulationForm";
 import { SemesterCertificateSimulationForm } from "@/components/constancia/SemesterCertificateSimulationForm";
+import { DemoOnly } from "@/components/demo/DemoOnly";
+import { CourseCertificateSimulationForm } from "@/components/demo/constancia/CourseCertificateSimulationForm";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { isDemoMode } from "@/lib/uiMode";
 import { listarConstanciasDocente } from "@/services/constancia/constanciaService";
@@ -84,11 +85,11 @@ export function TeacherCertificatesView() {
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            {isDemo ? (
+            <DemoOnly>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
                 Aula Virtual simulada
               </p>
-            ) : null}
+            </DemoOnly>
             <h2 className="mt-1 text-2xl font-semibold text-[var(--text)]">Mis constancias</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
               Consulta, visualizacion y descarga de constancias generadas.
@@ -99,7 +100,7 @@ export function TeacherCertificatesView() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-            {isDemo ? (
+            <DemoOnly>
               <button
                 className="min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
                 onClick={() => setIsSimulationFormOpen(true)}
@@ -107,7 +108,7 @@ export function TeacherCertificatesView() {
               >
                 Simular recepcion desde Aula Virtual
               </button>
-            ) : null}
+            </DemoOnly>
             <button
               className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isLoading}
@@ -120,14 +121,16 @@ export function TeacherCertificatesView() {
         </div>
       </section>
 
-      {isDemo && isSimulationFormOpen ? (
-        <CourseCertificateSimulationForm
-          onCancel={() => setIsSimulationFormOpen(false)}
-          onGenerated={loadCertificates}
-          teacherCode={teacherCode}
-          user={user}
-        />
-      ) : null}
+      <DemoOnly>
+        {isSimulationFormOpen ? (
+          <CourseCertificateSimulationForm
+            onCancel={() => setIsSimulationFormOpen(false)}
+            onGenerated={loadCertificates}
+            teacherCode={teacherCode}
+            user={user}
+          />
+        ) : null}
+      </DemoOnly>
 
       <SemesterCertificateSimulationForm
         certificates={certificates}

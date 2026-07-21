@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { DemoOnly } from "@/components/demo/DemoOnly";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { isDemoMode } from "@/lib/uiMode";
@@ -82,11 +83,11 @@ export function AppSidebar() {
                 {user.departamentoAcademico !== null ? (
                   <p className="mt-1 text-xs text-[var(--muted)]">{user.departamentoAcademico}</p>
                 ) : null}
-                {isDemo ? (
+                <DemoOnly>
                   <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">
                     Sesion simulada
                   </p>
-                ) : null}
+                </DemoOnly>
               </>
             ) : (
               <>

@@ -1,5 +1,6 @@
 "use client";
 
+import { DemoOnly } from "@/components/demo/DemoOnly";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { isDemoMode } from "@/lib/uiMode";
 
@@ -51,10 +52,12 @@ export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeade
               ? `${user.fullName} · ${user.role}`
               : "Sin sesión"}
         </span>
-        {isAuthenticated && isDemo ? (
-          <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
-            Sesión simulada
-          </span>
+        {isAuthenticated ? (
+          <DemoOnly>
+            <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+              Sesión simulada
+            </span>
+          </DemoOnly>
         ) : null}
         <button
           className="grid h-8 w-8 place-items-center rounded-md border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--gold-soft)]"

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { DemoOnly } from "@/components/demo/DemoOnly";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { isDemoMode } from "@/lib/uiMode";
 
@@ -66,12 +67,12 @@ export function AdminDashboard() {
             <p className="text-xs text-[var(--muted)]">Rol</p>
             <p className="mt-1 font-semibold">{user?.role ?? "Sin rol"}</p>
           </div>
-          {isDemo ? (
+          <DemoOnly>
             <div className="rounded-md border border-[rgba(201,168,93,0.42)] bg-[rgba(201,168,93,0.1)] p-3">
               <p className="text-xs text-[var(--gold-soft)]">Sesion</p>
               <p className="mt-1 font-semibold text-[var(--gold-soft)]">Simulada</p>
             </div>
-          ) : null}
+          </DemoOnly>
         </div>
       </section>
 
@@ -84,7 +85,7 @@ export function AdminDashboard() {
             {quickLinks.length}
           </p>
         </article>
-        {isDemo ? (
+        <DemoOnly>
           <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
               Modulos futuros
@@ -93,7 +94,7 @@ export function AdminDashboard() {
               {futureModules.length}
             </p>
           </article>
-        ) : null}
+        </DemoOnly>
         <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
             Seguridad
@@ -124,7 +125,7 @@ export function AdminDashboard() {
         </div>
       </section>
 
-      {isDemo ? (
+      <DemoOnly>
         <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
             Modulos administrativos futuros
@@ -150,7 +151,7 @@ export function AdminDashboard() {
             ))}
           </div>
         </section>
-      ) : null}
+      </DemoOnly>
     </div>
   );
 }

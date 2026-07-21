@@ -1,4 +1,4 @@
-import { isDemoMode } from "@/lib/uiMode";
+import { DemoOnly } from "@/components/demo/DemoOnly";
 import type { Docente } from "@/types/docente/perfilDocente.types";
 
 type PerfilDocenteHeaderProps = {
@@ -6,7 +6,6 @@ type PerfilDocenteHeaderProps = {
 };
 
 export function PerfilDocenteHeader({ docente }: PerfilDocenteHeaderProps) {
-  const isDemo = isDemoMode();
   const initials = `${docente.nombres.charAt(0)}${docente.apellidos.charAt(0)}`.toUpperCase();
 
   return (
@@ -33,7 +32,9 @@ export function PerfilDocenteHeader({ docente }: PerfilDocenteHeaderProps) {
           <HeaderBadge label="Rol" value="DOCENTE" />
           <HeaderBadge label="Departamento" value={docente.departamentoAcademico} />
           <HeaderBadge label="Estado" value="Activo" tone="success" />
-          {isDemo ? <HeaderBadge label="Estado de datos" value="Datos simulados" /> : null}
+          <DemoOnly>
+            <HeaderBadge label="Estado de datos" value="Datos simulados" />
+          </DemoOnly>
         </div>
       </div>
     </section>
