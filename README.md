@@ -20,30 +20,28 @@ El frontend queda disponible por defecto en:
 http://localhost:3000
 ```
 
+## Configuracion
+
+- `NEXT_PUBLIC_API_URL`: URL del backend.
+- `NEXT_PUBLIC_UI_MODE`: usar `demo` para desarrollo y simulacion, o `production` para una interfaz limpia de usuario final.
+
 ## Estructura
 
 `src/app/`
 
 - Rutas, layouts y paginas del App Router.
 
-`src/features/`
+El resto de `src/` se organiza por capas y dentro de cada capa por modulo funcional.
 
-- `admin/`: vista administrativa demo.
-- `auth/`: sesion simulada, login demo y tipos de usuario.
-- `constancias/`: listado, generacion simulada, detalle y servicios de constancias.
-- `director/`: vistas de director y consulta de docentes.
-- `perfil-docente/`: perfil docente consolidado.
-
-`src/components/`
-
-- `auth/`: guards de sesion y rol.
-- `layout/`: shell, sidebar y header.
-- `shared/`: componentes compartidos.
-- `ui/`: piezas visuales reutilizables.
-
-`src/lib/`
-
-- Configuracion comun, URL de API, cliente HTTP y utilidades.
+- `components/`: componentes visuales por modulo, layout y piezas compartidas.
+- `services/`: consumo HTTP y servicios de cliente.
+- `types/`: contratos TypeScript.
+- `hooks/`: hooks reutilizables cuando existan.
+- `context/`: providers de contexto, como autenticacion.
+- `guards/`: proteccion visual de sesion y roles.
+- `lib/`: infraestructura comun, URL de API y cliente HTTP.
+- `utils/`: utilidades transversales.
+- `mocks/`: datos simulados auxiliares.
 
 `public/`
 

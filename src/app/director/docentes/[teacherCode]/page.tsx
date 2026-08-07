@@ -1,6 +1,6 @@
-import { RequireRole } from "@/components/auth/RequireRole";
+import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
-import { DirectorTeacherProfileView } from "@/features/director/components/DirectorTeacherProfileView";
+import { DirectorTeacherProfileView } from "@/components/director/DirectorTeacherProfileView";
 
 type DirectorDocentePerfilPageProps = {
   params: Promise<{

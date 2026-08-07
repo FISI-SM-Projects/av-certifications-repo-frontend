@@ -1,6 +1,6 @@
-import { RequireRole } from "@/components/auth/RequireRole";
+import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
-import { TeacherCertificatesView } from "@/features/constancias/components/TeacherCertificatesView";
+import { TeacherCertificatesView } from "@/components/constancia/TeacherCertificatesView";
 
 export default function ConstanciasPage() {
   return (

@@ -1,6 +1,6 @@
-import { RequireRole } from "@/components/auth/RequireRole";
+import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
-import { CertificateDetailView } from "@/features/constancias/components/CertificateDetailView";
+import { CertificateDetailView } from "@/components/constancia/CertificateDetailView";
 
 type CertificateDetailPageProps = {
   params: Promise<{

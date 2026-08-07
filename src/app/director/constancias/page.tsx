@@ -1,6 +1,6 @@
-import { RequireRole } from "@/components/auth/RequireRole";
+import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
-import { DepartmentCertificatesPlaceholder } from "@/features/director/components/DepartmentCertificatesPlaceholder";
+import { DepartmentCertificatesPlaceholder } from "@/components/director/DepartmentCertificatesPlaceholder";
 
 export default function DirectorConstanciasPage() {
   return (

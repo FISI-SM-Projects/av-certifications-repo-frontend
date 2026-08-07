@@ -1,6 +1,6 @@
-import { RequireRole } from "@/components/auth/RequireRole";
+import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
-import { DepartmentTeachersTable } from "@/features/director/components/DepartmentTeachersTable";
+import { DepartmentTeachersTable } from "@/components/director/DepartmentTeachersTable";
 
 export default function DirectorDocentesPage() {
   return (
