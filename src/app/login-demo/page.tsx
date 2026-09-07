@@ -1,8 +1,13 @@
 import { DemoLoginSelector } from "@/components/auth/DemoLoginSelector";
 import { DemoOnly } from "@/components/demo/DemoOnly";
-import { isDemoMode } from "@/lib/uiMode";
+import { isDemoMode, isProductionMode } from "@/lib/uiMode";
+import { redirect } from "next/navigation";
 
 export default function LoginDemoPage() {
+  if (isProductionMode()) {
+    redirect("/login");
+  }
+
   const isDemo = isDemoMode();
 
   return (

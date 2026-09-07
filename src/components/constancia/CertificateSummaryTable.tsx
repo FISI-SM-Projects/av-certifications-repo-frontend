@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
-import { construirUrlDescargaPdf } from "@/services/constancia/constanciaService";
+import { descargarPdfConstancia } from "@/services/constancia/constanciaService";
 import type {
   CertificateGenerationSummary,
   EstadoConstancia,
@@ -96,13 +97,7 @@ export function CertificateSummaryTable({
                     >
                       Ver detalle
                     </Link>
-                    <a
-                      className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md bg-[var(--gold)] px-3 py-2 text-center text-xs font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-                      download
-                      href={construirUrlDescargaPdf(certificate.generationId)}
-                    >
-                      Descargar
-                    </a>
+                    <DownloadPdfButton generationId={certificate.generationId} />
                   </div>
                 </td>
               </tr>
@@ -111,6 +106,53 @@ export function CertificateSummaryTable({
         </table>
       </div>
     </section>
+  );
+}
+
+function DownloadPdfButton({ generationId }: { generationId: string }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  async function handleDownload() {
+    if (isDownloading) {
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+      setErrorMessage(null);
+      const blob = await descargarPdfConstancia(generationId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${generationId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "No se pudo descargar.");
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
+  return (
+    <span className="inline-flex flex-col gap-1">
+      <button
+        className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md bg-[var(--gold)] px-3 py-2 text-center text-xs font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={isDownloading}
+        onClick={handleDownload}
+        type="button"
+      >
+        {isDownloading ? "Descargando..." : "Descargar"}
+      </button>
+      {errorMessage !== null ? (
+        <span className="max-w-32 whitespace-normal text-[11px] text-red-100" role="alert">
+          {errorMessage}
+        </span>
+      ) : null}
+    </span>
   );
 }
 

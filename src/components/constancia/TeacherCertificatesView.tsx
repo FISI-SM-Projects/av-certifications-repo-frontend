@@ -132,11 +132,13 @@ export function TeacherCertificatesView() {
         ) : null}
       </DemoOnly>
 
-      <SemesterCertificateSimulationForm
-        certificates={certificates}
-        onGenerated={loadCertificates}
-        teacherCode={teacherCode}
-      />
+      <DemoOnly>
+        <SemesterCertificateSimulationForm
+          certificates={certificates}
+          onGenerated={loadCertificates}
+          teacherCode={teacherCode}
+        />
+      </DemoOnly>
 
       {isLoading ? <PanelMessage message="Cargando constancias..." /> : null}
 

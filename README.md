@@ -23,7 +23,7 @@ http://localhost:3000
 ## Configuracion
 
 - `NEXT_PUBLIC_API_URL`: URL del backend.
-- `NEXT_PUBLIC_UI_MODE`: usar `demo` para desarrollo y simulacion, o `production` para una interfaz limpia de usuario final.
+- `NEXT_PUBLIC_UI_MODE`: usar `demo` para desarrollo con selector demo, o `production` para login real JWT contra Spring Security.
 
 ## Estructura
 

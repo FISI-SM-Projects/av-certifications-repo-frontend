@@ -1,6 +1,13 @@
 import { buildApiUrl } from "@/lib/api";
+import { obtenerTokenSesion, eliminarSesion } from "@/services/auth/sessionStorage";
 
 const DEFAULT_TIMEOUT_MS = 10_000;
+const PUBLIC_API_PATHS = [
+  "/api/v1/auth/login",
+  "/api/v1/auth/demo-login",
+  "/api/v1/auth/demo-users",
+  "/api/v1/health",
+];
 
 export type ApiErrorOptions = {
   payload?: unknown;
@@ -56,6 +63,24 @@ export async function httpJson<T>(
   return payload as T;
 }
 
+export async function httpBlob(
+  path: string,
+  options: Omit<HttpJsonOptions<Blob>, "validate" | "body"> = {},
+): Promise<Blob> {
+  const response = await request(path, options);
+
+  if (!response.ok) {
+    const payload = await readResponsePayload(response);
+    throw new ApiError(
+      extractMessage(payload) ?? options.defaultErrorMessage ?? "No se pudo completar la solicitud",
+      response.status,
+      { payload },
+    );
+  }
+
+  return response.blob();
+}
+
 async function request<T>(path: string, options: HttpJsonOptions<T>): Promise<Response> {
   const {
     body,
@@ -84,16 +109,23 @@ async function request<T>(path: string, options: HttpJsonOptions<T>): Promise<Re
   }
 
   try {
-    return await fetch(buildApiUrl(path), {
+    const response = await fetch(buildApiUrl(path), {
       ...init,
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: init.cache ?? "no-store",
       headers: {
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...authHeadersFor(path),
         ...headers,
       },
       signal: controller.signal,
     });
+
+    if (response.status === 401 && !isPublicApiPath(path)) {
+      eliminarSesion();
+    }
+
+    return response;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
@@ -110,6 +142,21 @@ async function request<T>(path: string, options: HttpJsonOptions<T>): Promise<Re
     clearTimeout(timeoutId);
     signal?.removeEventListener("abort", abortExternalSignal);
   }
+}
+
+function authHeadersFor(path: string): Record<string, string> {
+  if (isPublicApiPath(path)) {
+    return {};
+  }
+
+  const token = obtenerTokenSesion();
+
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function isPublicApiPath(path: string): boolean {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return PUBLIC_API_PATHS.some((publicPath) => normalizedPath === publicPath);
 }
 
 async function readResponsePayload(response: Response): Promise<unknown> {

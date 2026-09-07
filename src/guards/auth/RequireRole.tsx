@@ -57,12 +57,13 @@ function UnauthorizedState() {
 export function RequireRole({ allowedRoles, children }: RequireRoleProps) {
   const router = useRouter();
   const { user, isLoading, isAuthenticated } = useAuth();
+  const loginPath = isDemoMode() ? "/login-demo" : "/login";
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace("/login-demo");
+      router.replace(loginPath);
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, loginPath, router]);
 
   if (isLoading) {
     return <LoadingState />;

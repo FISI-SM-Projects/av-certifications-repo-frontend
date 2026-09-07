@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 
 import type { UsuarioSesion } from "@/types/auth/auth.types";
 import {
+  AUTH_SESSION_CLEARED_EVENT,
   eliminarSesion,
   guardarSesion,
   obtenerSesion,
@@ -38,6 +39,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let isMounted = true;
 
+    function handleSessionCleared() {
+      setUser(null);
+    }
+
+    window.addEventListener(AUTH_SESSION_CLEARED_EVENT, handleSessionCleared);
+
     queueMicrotask(() => {
       if (!isMounted) {
         return;
@@ -49,6 +56,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       isMounted = false;
+      window.removeEventListener(AUTH_SESSION_CLEARED_EVENT, handleSessionCleared);
     };
   }, []);
 

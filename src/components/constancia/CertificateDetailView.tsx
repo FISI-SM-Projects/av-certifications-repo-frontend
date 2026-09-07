@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/context/auth/AuthProvider";
 import {
-  construirUrlDescargaPdf,
-  construirUrlVisualizacionPdf,
+  descargarPdfConstancia,
+  obtenerPdfConstancia,
   obtenerConstanciaPorGeneracion,
 } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
@@ -31,7 +31,10 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
   const normalizedGenerationId = generationId.trim();
   const [certificate, setCertificate] = useState<CertificateGenerationDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfErrorMessage, setPdfErrorMessage] = useState<string | null>(null);
   const backLink = useMemo(() => buildBackLink(returnTo, user?.role), [returnTo, user?.role]);
 
   const loadCertificate = useCallback(async () => {
@@ -67,18 +70,76 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
     return () => clearTimeout(timeoutId);
   }, [loadCertificate]);
 
-  const pdfUrl = useMemo(
-    () => (certificate ? construirUrlVisualizacionPdf(certificate.generationId) : null),
-    [certificate],
-  );
-  const downloadUrl = useMemo(
-    () => (certificate ? construirUrlDescargaPdf(certificate.generationId) : null),
-    [certificate],
-  );
+  useEffect(() => {
+    let isMounted = true;
+    let objectUrl: string | null = null;
+
+    async function loadPdf() {
+      if (certificate === null) {
+        setPdfUrl(null);
+        setPdfErrorMessage(null);
+        return;
+      }
+
+      try {
+        setPdfErrorMessage(null);
+        const blob = await obtenerPdfConstancia(certificate.generationId);
+        objectUrl = URL.createObjectURL(blob);
+
+        if (isMounted) {
+          setPdfUrl(objectUrl);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setPdfUrl(null);
+          setPdfErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "No se pudo cargar la vista previa del PDF.",
+          );
+        }
+      }
+    }
+
+    void loadPdf();
+
+    return () => {
+      isMounted = false;
+      if (objectUrl !== null) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [certificate]);
+
   const detailItems = useMemo(
     () => (certificate ? buildDetailItems(certificate) : []),
     [certificate],
   );
+
+  async function handleDownloadPdf() {
+    if (certificate === null || isDownloading) {
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+      const blob = await descargarPdfConstancia(certificate.generationId);
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `${certificate.generationId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      setPdfErrorMessage(
+        error instanceof Error ? error.message : "No se pudo descargar el PDF.",
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  }
 
   if (isLoading) {
     return <PanelMessage message="Cargando constancia..." />;
@@ -106,7 +167,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
     );
   }
 
-  if (certificate === null || pdfUrl === null || downloadUrl === null) {
+  if (certificate === null) {
     return (
       <PanelMessage
         action={<BackLink href={backLink.href} label={backLink.label} />}
@@ -137,13 +198,14 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <BackLink href={backLink.href} label={backLink.label} />
-            <a
+            <button
               className="rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-              download
-              href={downloadUrl}
+              disabled={isDownloading}
+              onClick={handleDownloadPdf}
+              type="button"
             >
-              Descargar PDF
-            </a>
+              {isDownloading ? "Descargando..." : "Descargar PDF"}
+            </button>
           </div>
         </div>
       </div>
@@ -181,22 +243,30 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
                 navegador puede bloquear el visor integrado.
               </p>
             </div>
-            <a
-              className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-              href={pdfUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              Abrir PDF en nueva pestaña
-            </a>
+            {pdfUrl !== null ? (
+              <a
+                className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+                href={pdfUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Abrir PDF en nueva pestaña
+              </a>
+            ) : null}
           </div>
 
           <div className="mt-4 overflow-hidden rounded-lg border border-[var(--border-soft)] bg-[#111]">
-            <iframe
-              className="h-[70vh] min-h-[520px] w-full"
-              src={pdfUrl}
-              title={`Vista previa de ${certificate.generationId}`}
-            />
+            {pdfUrl !== null ? (
+              <iframe
+                className="h-[70vh] min-h-[520px] w-full"
+                src={pdfUrl}
+                title={`Vista previa de ${certificate.generationId}`}
+              />
+            ) : (
+              <div className="flex min-h-[260px] items-center justify-center p-6 text-center text-sm text-[var(--muted)]">
+                {pdfErrorMessage ?? "Cargando vista previa PDF..."}
+              </div>
+            )}
           </div>
         </article>
       </section>

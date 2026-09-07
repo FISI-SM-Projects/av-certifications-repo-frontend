@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/lib/api";
-import { ApiError, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
+import { ApiError, httpBlob, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
 import type {
   CertificateGenerationDetail,
   CertificateGenerationSummary,
@@ -100,6 +100,28 @@ export function construirUrlDescargaPdf(generationId: string): string {
   return `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/download`;
 }
 
+export async function obtenerPdfConstancia(generationId: string): Promise<Blob> {
+  const idGeneracion = requireNonBlank(
+    generationId,
+    "El identificador de generacion es obligatorio",
+  );
+
+  return requestConstanciaBlob(
+    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/pdf`,
+  );
+}
+
+export async function descargarPdfConstancia(generationId: string): Promise<Blob> {
+  const idGeneracion = requireNonBlank(
+    generationId,
+    "El identificador de generacion es obligatorio",
+  );
+
+  return requestConstanciaBlob(
+    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/download`,
+  );
+}
+
 async function requestConstancia<T>(
   path: string,
   options: HttpJsonOptions<T>,
@@ -107,6 +129,21 @@ async function requestConstancia<T>(
   try {
     return await httpJson<T>(path, {
       ...options,
+      networkErrorMessage: ERROR_CONEXION,
+      defaultErrorMessage: ERROR_SOLICITUD,
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw toConstanciaApiError(error);
+    }
+
+    throw error;
+  }
+}
+
+async function requestConstanciaBlob(path: string): Promise<Blob> {
+  try {
+    return await httpBlob(path, {
       networkErrorMessage: ERROR_CONEXION,
       defaultErrorMessage: ERROR_SOLICITUD,
     });
