@@ -17,6 +17,7 @@ type SemesterCertificateGenerationFormProps = {
 };
 
 const VALID_COURSE_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO"]);
+const VALID_SEMESTER_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO", "EN_REVISION"]);
 
 export function SemesterCertificateGenerationForm({
   certificates,
@@ -31,6 +32,7 @@ export function SemesterCertificateGenerationForm({
 
   const activeSemester = selectedSemester || availableSemesters[0]?.semester || "";
   const selectedSummary = availableSemesters.find((item) => item.semester === activeSemester);
+  const semesterAlreadyGenerated = selectedSummary?.hasSemesterCertificate ?? false;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -41,6 +43,11 @@ export function SemesterCertificateGenerationForm({
 
     if (teacherCode.trim() === "" || activeSemester.trim() === "") {
       setErrorMessage("Seleccione un periodo con constancias por curso disponibles.");
+      return;
+    }
+
+    if (semesterAlreadyGenerated) {
+      setErrorMessage("La constancia semestral para este periodo ya fue generada.");
       return;
     }
 
@@ -85,6 +92,9 @@ export function SemesterCertificateGenerationForm({
           <div className="rounded-md border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--muted)]">
             <span className="font-semibold text-[var(--text)]">{selectedSummary.count}</span>{" "}
             constancias por curso disponibles
+            {selectedSummary.hasSemesterCertificate ? (
+              <span className="mt-1 block text-[var(--gold-soft)]">Constancia semestral ya generada</span>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -128,10 +138,14 @@ export function SemesterCertificateGenerationForm({
         </div>
         <button
           className="min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
-          disabled={isSubmitting || activeSemester === ""}
+          disabled={isSubmitting || activeSemester === "" || semesterAlreadyGenerated}
           type="submit"
         >
-          {isSubmitting ? "Generando constancia semestral..." : "Generar constancia semestral"}
+          {semesterAlreadyGenerated
+            ? "Ya generada"
+            : isSubmitting
+              ? "Generando constancia semestral..."
+              : "Generar constancia semestral"}
         </button>
       </form>
 
@@ -162,8 +176,11 @@ export function SemesterCertificateGenerationForm({
   );
 }
 
-function buildAvailableSemesters(certificates: CertificateGenerationSummary[]): { semester: string; count: number }[] {
-  const bySemester = new Map<string, number>();
+function buildAvailableSemesters(
+  certificates: CertificateGenerationSummary[],
+): { semester: string; count: number; hasSemesterCertificate: boolean }[] {
+  const bySemester = new Map<string, Set<string>>();
+  const generatedSemesters = new Set<string>();
 
   certificates
     .filter((certificate) =>
@@ -171,11 +188,26 @@ function buildAvailableSemesters(certificates: CertificateGenerationSummary[]): 
       VALID_COURSE_STATUSES.has(certificate.status),
     )
     .forEach((certificate) => {
-      bySemester.set(certificate.semester, (bySemester.get(certificate.semester) ?? 0) + 1);
+      const workloadIds = bySemester.get(certificate.semester) ?? new Set<string>();
+      workloadIds.add(certificate.certificateKey);
+      bySemester.set(certificate.semester, workloadIds);
+    });
+
+  certificates
+    .filter((certificate) =>
+      (certificate.certificateType === "SEMESTER" || certificate.type === "SEMESTRAL") &&
+      VALID_SEMESTER_STATUSES.has(certificate.status),
+    )
+    .forEach((certificate) => {
+      generatedSemesters.add(certificate.semester);
     });
 
   return Array.from(bySemester.entries())
-    .map(([semester, count]) => ({ semester, count }))
+    .map(([semester, workloadIds]) => ({
+      semester,
+      count: workloadIds.size,
+      hasSemesterCertificate: generatedSemesters.has(semester),
+    }))
     .sort((left, right) => right.semester.localeCompare(left.semester));
 }
 

@@ -1,19 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getAcademicWorkload, generateWorkloadCertificate } from "@/services/docente/workloadService";
+import type { CertificateGenerationSummary } from "@/types/constancia/constancia.types";
 import type { AcademicWorkload } from "@/types/docente/workload.types";
 
-export function AcademicWorkloadTable({ teacherCode, onGenerated }: {
+type AcademicWorkloadTableProps = {
   teacherCode: string;
+  certificates?: CertificateGenerationSummary[];
   onGenerated?: () => Promise<void>;
-}) {
+};
+
+const VALID_GENERATED_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO", "EN_REVISION"]);
+
+export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenerated }: AcademicWorkloadTableProps) {
   const [rows, setRows] = useState<AcademicWorkload[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
+  const generatedWorkloadIds = useMemo(() => {
+    const ids = new Set<number>();
+    certificates
+      .filter((certificate) =>
+        (certificate.certificateType === "COURSE" || certificate.type === "CURSO") &&
+        VALID_GENERATED_STATUSES.has(certificate.status),
+      )
+      .forEach((certificate) => {
+        const match = /^workload-(\d+)$/.exec(certificate.certificateKey);
+        if (match) {
+          ids.add(Number(match[1]));
+        }
+      });
+    return ids;
+  }, [certificates]);
+
   useEffect(() => {
     const controller = new AbortController();
     void getAcademicWorkload(teacherCode, controller.signal).then((data) => {
@@ -43,13 +65,19 @@ export function AcademicWorkloadTable({ teacherCode, onGenerated }: {
         <thead className="bg-[var(--surface-soft)]"><tr>
           {["Periodo", "Curso", "Ciclo", "Seccion", "Escuela", "Plan", ...(onGenerated ? ["Acciones"] : [])].map((label) => <th key={label} className="p-3">{label}</th>)}
         </tr></thead>
-        <tbody>{rows.map((row) => <tr key={row.academicWorkloadId} className="border-t border-[var(--border)]">
-          <td className="p-3">{row.academicPeriod}</td><td className="p-3">{row.courseCode} · {row.courseName}</td>
-          <td className="p-3">{row.cycle}</td><td className="p-3">{row.section}</td><td className="p-3">{row.school}</td><td className="p-3">{row.plan}</td>
-          {onGenerated && <td className="p-3"><button type="button" disabled={generating !== null}
-            className="min-h-10 whitespace-nowrap rounded-md bg-[var(--gold)] px-3 text-[#15130c] disabled:opacity-50"
-            onClick={() => void generate(row.academicWorkloadId)}>{generating === row.academicWorkloadId ? "Generando..." : "Generar constancia"}</button></td>}
-        </tr>)}</tbody>
+        <tbody>{rows.map((row) => {
+          const hasGeneratedCertificate = generatedWorkloadIds.has(row.academicWorkloadId);
+
+          return (
+            <tr key={row.academicWorkloadId} className="border-t border-[var(--border)]">
+              <td className="p-3">{row.academicPeriod}</td><td className="p-3">{row.courseCode} · {row.courseName}</td>
+              <td className="p-3">{row.cycle}</td><td className="p-3">{row.section}</td><td className="p-3">{row.school}</td><td className="p-3">{row.plan}</td>
+              {onGenerated && <td className="p-3"><button type="button" disabled={generating !== null || hasGeneratedCertificate}
+                className="min-h-10 whitespace-nowrap rounded-md bg-[var(--gold)] px-3 text-[#15130c] disabled:cursor-not-allowed disabled:opacity-55"
+                onClick={() => void generate(row.academicWorkloadId)}>{hasGeneratedCertificate ? "Ya generada" : generating === row.academicWorkloadId ? "Generando..." : "Generar constancia"}</button></td>}
+            </tr>
+          );
+        })}</tbody>
       </table>
     </div>}
   </section>;

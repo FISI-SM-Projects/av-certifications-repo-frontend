@@ -104,7 +104,7 @@ export function TeacherCertificatesView() {
       </section>
 
       {isLoading ? <PanelMessage message="Cargando constancias..." /> : null}
-      <AcademicWorkloadTable teacherCode={teacherCode} onGenerated={loadCertificates} />
+      <AcademicWorkloadTable certificates={certificates} teacherCode={teacherCode} onGenerated={loadCertificates} />
       <SemesterCertificateGenerationForm
         certificates={certificates}
         onGenerated={loadCertificates}
