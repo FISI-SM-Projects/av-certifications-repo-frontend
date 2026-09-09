@@ -1,6 +1,11 @@
 export type TipoConstancia = "CURSO" | "SEMESTRAL";
+export type CertificationType = "COURSE" | "SEMESTER";
 
-export type EstadoConstancia = "GENERADO" | "APROBADO";
+export const CERTIFICATE_STATUSES = ["GENERADO", "APROBADO", "EMITIDO", "VERIFICADO", "EN_REVISION", "NO_EMITIDO", "REVOCADO"] as const;
+export type EstadoConstancia = typeof CERTIFICATE_STATUSES[number];
+export function isCertificateStatus(value: unknown): value is EstadoConstancia {
+  return typeof value === "string" && CERTIFICATE_STATUSES.includes(value as EstadoConstancia);
+}
 
 export type TeacherPayload = {
   full_name: string;
@@ -46,6 +51,7 @@ export type CourseCertificateResponse = {
   certificateKey: string;
   version: number;
   type: TipoConstancia;
+  certificateType: CertificationType;
   status: EstadoConstancia;
   teacherFullName: string;
   courseCode: string;
@@ -62,28 +68,30 @@ export type SemesterCertificateResponse = {
   certificateKey: string;
   version: number;
   type: "SEMESTRAL";
+  certificateType: "SEMESTER";
   status: EstadoConstancia;
   teacherCode: string;
   teacherFullName: string;
   semester: string;
-  courseCount: number;
-  sourceGenerationIds: string[];
   generatedAt: string;
   viewUrl: string;
   downloadUrl: string;
 };
 
 export type CertificateGenerationSummary = {
+  pdfAvailable?: boolean;
+  courseSubject?: string;
   generationId: string;
   certificateKey: string;
   version: number;
   type: TipoConstancia;
+  certificateType?: CertificationType;
   status: EstadoConstancia;
   teacherCode: string;
   courseCode: string | null;
   section: string | null;
   semester: string;
-  generatedAt: string;
+  generatedAt: string | null;
   viewUrl: string;
   downloadUrl: string;
 };

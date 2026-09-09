@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { useAuth } from "@/context/auth/AuthProvider";
+import { AcademicWorkloadTable } from "@/components/docente/AcademicWorkloadTable";
 import { ConstanciasTable } from "@/components/docente/ConstanciasTable";
 import { DatosDocenteCard } from "@/components/docente/DatosDocenteCard";
 import { PerfilDocenteHeader } from "@/components/docente/PerfilDocenteHeader";
@@ -102,6 +103,7 @@ export function TeacherProfileView() {
     <div className="space-y-5">
       <PerfilDocenteHeader docente={perfil.docente} />
       <DatosDocenteCard docente={perfil.docente} />
+      <AcademicWorkloadTable teacherCode={teacherCode} />
       <ResumenConstanciasCard constancias={perfil.constancias} />
       <ConstanciasTable
         constancias={perfil.constancias}

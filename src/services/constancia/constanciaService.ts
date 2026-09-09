@@ -1,5 +1,6 @@
+import { isCertificateStatus } from "@/types/constancia/constancia.types";
 import { API_BASE_URL } from "@/lib/api";
-import { ApiError, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
+import { ApiError, httpBlob, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
 import type {
   CertificateGenerationDetail,
   CertificateGenerationSummary,
@@ -100,6 +101,28 @@ export function construirUrlDescargaPdf(generationId: string): string {
   return `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/download`;
 }
 
+export async function obtenerPdfConstancia(generationId: string): Promise<Blob> {
+  const idGeneracion = requireNonBlank(
+    generationId,
+    "El identificador de generacion es obligatorio",
+  );
+
+  return requestConstanciaBlob(
+    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/pdf`,
+  );
+}
+
+export async function descargarPdfConstancia(generationId: string): Promise<Blob> {
+  const idGeneracion = requireNonBlank(
+    generationId,
+    "El identificador de generacion es obligatorio",
+  );
+
+  return requestConstanciaBlob(
+    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/download`,
+  );
+}
+
 async function requestConstancia<T>(
   path: string,
   options: HttpJsonOptions<T>,
@@ -107,6 +130,21 @@ async function requestConstancia<T>(
   try {
     return await httpJson<T>(path, {
       ...options,
+      networkErrorMessage: ERROR_CONEXION,
+      defaultErrorMessage: ERROR_SOLICITUD,
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw toConstanciaApiError(error);
+    }
+
+    throw error;
+  }
+}
+
+async function requestConstanciaBlob(path: string): Promise<Blob> {
+  try {
+    return await httpBlob(path, {
       networkErrorMessage: ERROR_CONEXION,
       defaultErrorMessage: ERROR_SOLICITUD,
     });
@@ -160,10 +198,7 @@ function validateSemesterCertificateResponse(payload: unknown): SemesterCertific
 
   if (
     typeof payload.teacherCode !== "string" ||
-    typeof payload.teacherFullName !== "string" ||
-    typeof payload.courseCount !== "number" ||
-    !Array.isArray(payload.sourceGenerationIds) ||
-    !payload.sourceGenerationIds.every((id) => typeof id === "string")
+    typeof payload.teacherFullName !== "string"
   ) {
     throw new ApiError("La respuesta de generacion semestral no es valida.", 0);
   }
@@ -205,9 +240,10 @@ function hasCommonCertificateFields(value: Record<string, unknown>): boolean {
     typeof value.certificateKey === "string" &&
     typeof value.version === "number" &&
     (value.type === "CURSO" || value.type === "SEMESTRAL") &&
-    (value.status === "GENERADO" || value.status === "APROBADO") &&
+    (value.certificateType === undefined || value.certificateType === "COURSE" || value.certificateType === "SEMESTER") &&
+    isCertificateStatus(value.status) &&
     typeof value.semester === "string" &&
-    typeof value.generatedAt === "string" &&
+    (typeof value.generatedAt === "string" || value.generatedAt === null) &&
     typeof value.viewUrl === "string" &&
     typeof value.downloadUrl === "string"
   );

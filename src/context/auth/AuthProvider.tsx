@@ -11,7 +11,9 @@ import {
 import type { ReactNode } from "react";
 
 import type { UsuarioSesion } from "@/types/auth/auth.types";
+import { refreshRealSession } from "@/services/auth/authService";
 import {
+  AUTH_SESSION_CLEARED_EVENT,
   eliminarSesion,
   guardarSesion,
   obtenerSesion,
@@ -38,17 +40,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let isMounted = true;
 
+    function handleSessionCleared() {
+      setUser(null);
+    }
+
+    window.addEventListener(AUTH_SESSION_CLEARED_EVENT, handleSessionCleared);
+
     queueMicrotask(() => {
       if (!isMounted) {
         return;
       }
 
-      setUser(obtenerSesion());
-      setIsLoading(false);
+      const stored = obtenerSesion();
+      if (stored?.authMode === "jwt") {
+        void refreshRealSession(stored).then((current) => {
+          if (isMounted) { guardarSesion(current); setUser(current); }
+        }).catch(() => {
+          if (isMounted) { eliminarSesion(); setUser(null); }
+        }).finally(() => { if (isMounted) setIsLoading(false); });
+      } else {
+        if (stored) eliminarSesion();
+        setUser(null);
+        setIsLoading(false);
+      }
     });
 
     return () => {
       isMounted = false;
+      window.removeEventListener(AUTH_SESSION_CLEARED_EVENT, handleSessionCleared);
     };
   }, []);
 

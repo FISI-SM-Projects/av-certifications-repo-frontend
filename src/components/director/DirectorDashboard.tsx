@@ -6,18 +6,12 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { obtenerDocentesPorDepartamento } from "@/services/director/directorService";
 
-const DEPARTAMENTO_ADMIN_DEMO = "Ingeniería de Software";
-
 function obtenerDepartamentoConsulta(
   role: string | undefined,
   departamentoAcademico: string | null | undefined,
 ): string | null {
   if (departamentoAcademico !== null && departamentoAcademico !== undefined) {
     return departamentoAcademico;
-  }
-
-  if (role === "ADMIN") {
-    return DEPARTAMENTO_ADMIN_DEMO;
   }
 
   return null;
@@ -83,12 +77,8 @@ export function DirectorDashboard() {
           <div className="rounded-md border border-[var(--border-soft)] bg-[rgba(27,5,12,0.72)] p-3">
             <p className="text-xs text-[var(--muted)]">Departamento académico</p>
             <p className="mt-1 font-semibold">
-              {user?.departamentoAcademico ?? "Demo administrador: Ingeniería de Software"}
+              {user?.departamentoAcademico ?? "Sin departamento asociado"}
             </p>
-          </div>
-          <div className="rounded-md border border-[rgba(201,168,93,0.42)] bg-[rgba(201,168,93,0.1)] p-3">
-            <p className="text-xs text-[var(--gold-soft)]">Sesión</p>
-            <p className="mt-1 font-semibold text-[var(--gold-soft)]">Simulada</p>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 # Gestion Docente FISI - Frontend
 
-Aplicacion web en Next.js App Router para la gestion docente y consulta de constancias.
+Aplicacion web en Next.js App Router para la gestion docente y consulta de constancias con login institucional JWT.
 
 ## Requisitos
 
@@ -22,8 +22,7 @@ http://localhost:3000
 
 ## Configuracion
 
-- `NEXT_PUBLIC_API_URL`: URL del backend.
-- `NEXT_PUBLIC_UI_MODE`: usar `demo` para desarrollo y simulacion, o `production` para una interfaz limpia de usuario final.
+- `NEXT_PUBLIC_API_URL`: URL del backend Spring Boot con login real JWT.
 
 ## Estructura
 
@@ -41,7 +40,6 @@ El resto de `src/` se organiza por capas y dentro de cada capa por modulo funcio
 - `guards/`: proteccion visual de sesion y roles.
 - `lib/`: infraestructura comun, URL de API y cliente HTTP.
 - `utils/`: utilidades transversales.
-- `mocks/`: datos simulados auxiliares.
 
 `public/`
 

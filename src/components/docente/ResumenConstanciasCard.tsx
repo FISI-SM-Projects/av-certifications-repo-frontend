@@ -6,10 +6,10 @@ type ResumenConstanciasCardProps = {
 
 export function ResumenConstanciasCard({ constancias }: ResumenConstanciasCardProps) {
   const generadas = constancias.filter(
-    (constancia) => constancia.status === "GENERADO",
+    (constancia) => ["GENERADO", "EMITIDO"].includes(constancia.status),
   ).length;
   const aprobadas = constancias.filter(
-    (constancia) => constancia.status === "APROBADO",
+    (constancia) => ["APROBADO", "VERIFICADO"].includes(constancia.status),
   ).length;
   const ultimoPeriodo = constancias[0]?.semester ?? "Sin periodo";
 

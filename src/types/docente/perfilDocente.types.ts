@@ -1,6 +1,6 @@
 import type { CertificateGenerationSummary } from "@/types/constancia/constancia.types";
 
-export type EstadoConstancia = "GENERADO" | "APROBADO";
+export type { EstadoConstancia } from "@/types/constancia/constancia.types";
 
 export type Docente = {
   id: number;
@@ -11,6 +11,7 @@ export type Docente = {
   departamentoAcademico: string;
   categoria: string;
   condicion: string;
+  estado?: string;
 };
 
 export type ConstanciaPerfil = CertificateGenerationSummary;

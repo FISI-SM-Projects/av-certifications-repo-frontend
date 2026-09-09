@@ -1,4 +1,3 @@
-import { DemoOnly } from "@/components/demo/DemoOnly";
 import type { Docente } from "@/types/docente/perfilDocente.types";
 
 type PerfilDocenteHeaderProps = {
@@ -31,10 +30,7 @@ export function PerfilDocenteHeader({ docente }: PerfilDocenteHeaderProps) {
         <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[34rem] lg:grid-cols-4">
           <HeaderBadge label="Rol" value="DOCENTE" />
           <HeaderBadge label="Departamento" value={docente.departamentoAcademico} />
-          <HeaderBadge label="Estado" value="Activo" tone="success" />
-          <DemoOnly>
-            <HeaderBadge label="Estado de datos" value="Datos simulados" />
-          </DemoOnly>
+          <HeaderBadge label="Estado" value={docente.estado ?? "Activo"} tone="success" />
         </div>
       </div>
     </section>

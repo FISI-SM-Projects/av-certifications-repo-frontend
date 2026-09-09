@@ -14,7 +14,7 @@ export function LogoutButton({ className }: LogoutButtonProps) {
 
   function handleLogout() {
     logout();
-    router.push("/login-demo");
+    router.push("/login");
   }
 
   return (

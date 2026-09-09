@@ -4,7 +4,7 @@ type EstadoConstanciaBadgeProps = {
   estado: EstadoConstancia;
 };
 
-const styles: Record<EstadoConstancia, string> = {
+const styles: Partial<Record<EstadoConstancia, string>> = {
   GENERADO:
     "border-[rgba(224,198,121,0.5)] bg-[rgba(201,168,93,0.16)] text-[var(--gold-soft)]",
   APROBADO:
@@ -14,7 +14,7 @@ const styles: Record<EstadoConstancia, string> = {
 export function EstadoConstanciaBadge({ estado }: EstadoConstanciaBadgeProps) {
   return (
     <span
-      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${styles[estado]}`}
+      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${styles[estado] ?? "border-[var(--border)] text-[var(--text)]"}`}
     >
       {estado}
     </span>
