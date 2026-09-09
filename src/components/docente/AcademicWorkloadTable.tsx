@@ -12,6 +12,7 @@ type AcademicWorkloadTableProps = {
 };
 
 const VALID_GENERATED_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO", "EN_REVISION"]);
+const APPROVED_STATUSES = new Set(["VERIFICADO", "APROBADO"]);
 
 export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenerated }: AcademicWorkloadTableProps) {
   const [rows, setRows] = useState<AcademicWorkload[]>([]);
@@ -20,8 +21,8 @@ export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenera
   const [generating, setGenerating] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
-  const generatedWorkloadIds = useMemo(() => {
-    const ids = new Set<number>();
+  const certificatesByWorkloadId = useMemo(() => {
+    const byWorkloadId = new Map<number, CertificateGenerationSummary>();
     certificates
       .filter((certificate) =>
         (certificate.certificateType === "COURSE" || certificate.type === "CURSO") &&
@@ -30,10 +31,14 @@ export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenera
       .forEach((certificate) => {
         const match = /^workload-(\d+)$/.exec(certificate.certificateKey);
         if (match) {
-          ids.add(Number(match[1]));
+          const workloadId = Number(match[1]);
+          const current = byWorkloadId.get(workloadId);
+          if (!current || Number(certificate.generationId) > Number(current.generationId)) {
+            byWorkloadId.set(workloadId, certificate);
+          }
         }
       });
-    return ids;
+    return byWorkloadId;
   }, [certificates]);
 
   useEffect(() => {
@@ -48,8 +53,13 @@ export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenera
   async function generate(id: number) {
     setGenerating(id); setError(null); setMessage(null);
     try {
-      await generateWorkloadCertificate(id);
-      setMessage("Constancia generada correctamente.");
+      const existingCertificate = certificatesByWorkloadId.get(id);
+      const response = await generateWorkloadCertificate(id);
+      setMessage(existingCertificate?.generationId === response.generationId
+        ? "No se genero una nueva version porque no hay cambios respecto a la constancia vigente."
+        : existingCertificate
+          ? "Constancia regenerada correctamente."
+          : "Constancia generada correctamente.");
       await onGenerated?.();
     } catch (e) { setError(e instanceof Error ? e.message : "No se pudo generar la constancia"); }
     finally { setGenerating(null); }
@@ -66,15 +76,21 @@ export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenera
           {["Periodo", "Curso", "Ciclo", "Seccion", "Escuela", "Plan", ...(onGenerated ? ["Acciones"] : [])].map((label) => <th key={label} className="p-3">{label}</th>)}
         </tr></thead>
         <tbody>{rows.map((row) => {
-          const hasGeneratedCertificate = generatedWorkloadIds.has(row.academicWorkloadId);
+          const certificate = certificatesByWorkloadId.get(row.academicWorkloadId);
+          const isApproved = certificate ? APPROVED_STATUSES.has(certificate.status) : false;
+          const actionLabel = certificate
+            ? isApproved
+              ? "Verificada"
+              : "Regenerar constancia"
+            : "Generar constancia";
 
           return (
             <tr key={row.academicWorkloadId} className="border-t border-[var(--border)]">
               <td className="p-3">{row.academicPeriod}</td><td className="p-3">{row.courseCode} · {row.courseName}</td>
               <td className="p-3">{row.cycle}</td><td className="p-3">{row.section}</td><td className="p-3">{row.school}</td><td className="p-3">{row.plan}</td>
-              {onGenerated && <td className="p-3"><button type="button" disabled={generating !== null || hasGeneratedCertificate}
+              {onGenerated && <td className="p-3"><button type="button" disabled={generating !== null || isApproved}
                 className="min-h-10 whitespace-nowrap rounded-md bg-[var(--gold)] px-3 text-[#15130c] disabled:cursor-not-allowed disabled:opacity-55"
-                onClick={() => void generate(row.academicWorkloadId)}>{hasGeneratedCertificate ? "Ya generada" : generating === row.academicWorkloadId ? "Generando..." : "Generar constancia"}</button></td>}
+                onClick={() => void generate(row.academicWorkloadId)}>{generating === row.academicWorkloadId ? "Generando..." : actionLabel}</button></td>}
             </tr>
           );
         })}</tbody>

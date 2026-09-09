@@ -7,7 +7,6 @@ import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type {
   CertificateGenerationSummary,
   SemesterCertificateRequest,
-  SemesterCertificateResponse,
 } from "@/types/constancia/constancia.types";
 
 type SemesterCertificateGenerationFormProps = {
@@ -18,6 +17,7 @@ type SemesterCertificateGenerationFormProps = {
 
 const VALID_COURSE_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO"]);
 const VALID_SEMESTER_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO", "EN_REVISION"]);
+const APPROVED_STATUSES = new Set(["VERIFICADO", "APROBADO"]);
 
 export function SemesterCertificateGenerationForm({
   certificates,
@@ -27,12 +27,13 @@ export function SemesterCertificateGenerationForm({
   const availableSemesters = useMemo(() => buildAvailableSemesters(certificates), [certificates]);
   const [selectedSemester, setSelectedSemester] = useState(availableSemesters[0]?.semester ?? "");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successResponse, setSuccessResponse] = useState<SemesterCertificateResponse | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const activeSemester = selectedSemester || availableSemesters[0]?.semester || "";
   const selectedSummary = availableSemesters.find((item) => item.semester === activeSemester);
-  const semesterAlreadyGenerated = selectedSummary?.hasSemesterCertificate ?? false;
+  const semesterCertificate = selectedSummary?.semesterCertificate ?? null;
+  const semesterIsApproved = semesterCertificate ? APPROVED_STATUSES.has(semesterCertificate.status) : false;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,8 +47,8 @@ export function SemesterCertificateGenerationForm({
       return;
     }
 
-    if (semesterAlreadyGenerated) {
-      setErrorMessage("La constancia semestral para este periodo ya fue generada.");
+    if (semesterIsApproved) {
+      setErrorMessage("La constancia semestral para este periodo ya fue verificada y no puede regenerarse.");
       return;
     }
 
@@ -59,11 +60,13 @@ export function SemesterCertificateGenerationForm({
 
     setIsSubmitting(true);
     setErrorMessage(null);
-    setSuccessResponse(null);
+    setSuccessMessage(null);
 
     try {
       const response = await generarConstanciaSemestral(request);
-      setSuccessResponse(response);
+      setSuccessMessage(semesterCertificate?.generationId === response.generationId
+        ? "No se genero una nueva version porque no hay cambios respecto a la constancia semestral vigente."
+        : `Constancia semestral ${response.generationId} generada correctamente.`);
       await onGenerated();
     } catch (error) {
       if (error instanceof ConstanciaApiError) {
@@ -92,8 +95,12 @@ export function SemesterCertificateGenerationForm({
           <div className="rounded-md border border-[var(--border-soft)] bg-[var(--surface-soft)] px-4 py-3 text-sm text-[var(--muted)]">
             <span className="font-semibold text-[var(--text)]">{selectedSummary.count}</span>{" "}
             constancias por curso disponibles
-            {selectedSummary.hasSemesterCertificate ? (
-              <span className="mt-1 block text-[var(--gold-soft)]">Constancia semestral ya generada</span>
+            {selectedSummary.semesterCertificate ? (
+              <span className="mt-1 block text-[var(--gold-soft)]">
+                {APPROVED_STATUSES.has(selectedSummary.semesterCertificate.status)
+                  ? "Constancia semestral verificada"
+                  : "Constancia semestral vigente regenerable"}
+              </span>
             ) : null}
           </div>
         ) : null}
@@ -138,14 +145,16 @@ export function SemesterCertificateGenerationForm({
         </div>
         <button
           className="min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
-          disabled={isSubmitting || activeSemester === "" || semesterAlreadyGenerated}
+          disabled={isSubmitting || activeSemester === "" || semesterIsApproved}
           type="submit"
         >
-          {semesterAlreadyGenerated
-            ? "Ya generada"
+          {semesterIsApproved
+            ? "Constancia semestral verificada"
             : isSubmitting
               ? "Generando constancia semestral..."
-              : "Generar constancia semestral"}
+              : semesterCertificate
+                ? "Regenerar constancia semestral"
+                : "Generar constancia semestral"}
         </button>
       </form>
 
@@ -164,9 +173,9 @@ export function SemesterCertificateGenerationForm({
             tone="error"
           />
         ) : null}
-        {successResponse ? (
+        {successMessage ? (
           <FeedbackPanel
-            message={`Constancia semestral ${successResponse.generationId} generada correctamente.`}
+            message={successMessage}
             title="Generacion exitosa"
             tone="success"
           />
@@ -178,9 +187,9 @@ export function SemesterCertificateGenerationForm({
 
 function buildAvailableSemesters(
   certificates: CertificateGenerationSummary[],
-): { semester: string; count: number; hasSemesterCertificate: boolean }[] {
+): { semester: string; count: number; semesterCertificate: CertificateGenerationSummary | null }[] {
   const bySemester = new Map<string, Set<string>>();
-  const generatedSemesters = new Set<string>();
+  const generatedSemesters = new Map<string, CertificateGenerationSummary>();
 
   certificates
     .filter((certificate) =>
@@ -199,14 +208,17 @@ function buildAvailableSemesters(
       VALID_SEMESTER_STATUSES.has(certificate.status),
     )
     .forEach((certificate) => {
-      generatedSemesters.add(certificate.semester);
+      const current = generatedSemesters.get(certificate.semester);
+      if (!current || Number(certificate.generationId) > Number(current.generationId)) {
+        generatedSemesters.set(certificate.semester, certificate);
+      }
     });
 
   return Array.from(bySemester.entries())
     .map(([semester, workloadIds]) => ({
       semester,
       count: workloadIds.size,
-      hasSemesterCertificate: generatedSemesters.has(semester),
+      semesterCertificate: generatedSemesters.get(semester) ?? null,
     }))
     .sort((left, right) => right.semester.localeCompare(left.semester));
 }
