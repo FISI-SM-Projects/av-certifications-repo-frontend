@@ -33,19 +33,33 @@ export async function loginReal(username: string, password: string): Promise<Usu
 }
 
 function validateRealLoginResponse(payload: unknown): RealLoginResponse {
+  const loginPayload = extractLoginPayload(payload);
+
   if (
-    !isRecord(payload) ||
-    typeof payload.token !== "string" ||
-    payload.token.trim() === "" ||
-    typeof payload.type !== "string"
+    loginPayload === null ||
+    typeof loginPayload.token !== "string" ||
+    loginPayload.token.trim() === "" ||
+    typeof loginPayload.type !== "string"
   ) {
     throw new ApiError("La respuesta de login real no tiene el formato esperado.", 0);
   }
 
   return {
-    token: payload.token,
-    type: payload.type,
+    token: loginPayload.token,
+    type: loginPayload.type,
   };
+}
+
+function extractLoginPayload(payload: unknown): Record<string, unknown> | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  if (isRecord(payload.data)) {
+    return payload.data;
+  }
+
+  return payload;
 }
 
 function isRolUsuario(value: unknown): value is RolUsuario {
