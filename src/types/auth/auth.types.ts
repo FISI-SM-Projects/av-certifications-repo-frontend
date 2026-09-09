@@ -17,6 +17,21 @@ export type UsuarioSesion = {
   accountId?: number | null;
   expiresAt?: number | null;
   roles?: string[];
+  teacher?: InstitutionalContext["teacher"];
+};
+
+export type InstitutionalContext = {
+  accountId: number;
+  personId: number;
+  ldapUid: string;
+  institutionalEmail: string;
+  fullName: string;
+  roles: string[];
+  accountStatus: string;
+  personStatus: string;
+  teacher: { teacherId: number; teacherCode: string; moodleId: number; department: string | null } | null;
+  student: null;
+  administrative: null;
 };
 
 export type DemoLoginRequest = {

@@ -83,6 +83,11 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
 
       try {
         setPdfErrorMessage(null);
+        if (certificate.pdfAvailable === false) {
+          setPdfUrl(null);
+          setPdfErrorMessage("El documento PDF no esta disponible en el almacenamiento configurado.");
+          return;
+        }
         const blob = await obtenerPdfConstancia(certificate.generationId);
         objectUrl = URL.createObjectURL(blob);
 
@@ -291,10 +296,10 @@ function buildDetailItems(certificate: CertificateGenerationDetail): DetailItem[
 
 function CertificateStatusBadge({ status }: { status: EstadoConstancia }) {
   const className =
-    status === "APROBADO"
+    (status === "APROBADO" || status === "VERIFICADO")
       ? "border-[rgba(79,155,97,0.55)] bg-[rgba(79,155,97,0.16)] text-[#b8f0c4]"
       : "border-[rgba(201,168,93,0.55)] bg-[rgba(201,168,93,0.14)] text-[var(--gold-soft)]";
-  const label = status === "APROBADO" ? "Aprobado" : "Generado";
+  const label = status.replaceAll("_", " ");
 
   return (
     <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${className}`}>

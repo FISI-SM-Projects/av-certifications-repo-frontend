@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { CertificateSummaryTable } from "@/components/constancia/CertificateSummaryTable";
+import { AcademicWorkloadTable } from "@/components/docente/AcademicWorkloadTable";
 import { SemesterCertificateSimulationForm } from "@/components/constancia/SemesterCertificateSimulationForm";
 import { DemoOnly } from "@/components/demo/DemoOnly";
 import { CourseCertificateSimulationForm } from "@/components/demo/constancia/CourseCertificateSimulationForm";
@@ -95,7 +96,7 @@ export function TeacherCertificatesView() {
               Consulta, visualizacion y descarga de constancias generadas.
             </p>
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              Se muestran las ultimas versiones disponibles para el codigo docente{" "}
+              Se muestran las constancias registradas para el codigo docente{" "}
               <span className="font-semibold text-[var(--gold-soft)]">{teacherCode}</span>.
             </p>
           </div>
@@ -141,6 +142,7 @@ export function TeacherCertificatesView() {
       </DemoOnly>
 
       {isLoading ? <PanelMessage message="Cargando constancias..." /> : null}
+      {!isDemo && <AcademicWorkloadTable teacherCode={teacherCode} onGenerated={loadCertificates} />}
 
       {!isLoading && errorMessage !== null ? (
         <PanelMessage
@@ -179,7 +181,7 @@ export function TeacherCertificatesView() {
                 Resumen de constancias
               </p>
               <h3 className="mt-1 text-lg font-semibold text-[var(--text)]">
-                Ultimas versiones visibles
+                Constancias registradas
               </h3>
             </div>
             <SummaryGrid items={summary} />
@@ -199,11 +201,11 @@ function buildSummary(certificates: CertificateGenerationSummary[]): SummaryItem
     { label: "Visibles", value: certificates.length },
     {
       label: "Generadas",
-      value: certificates.filter((certificate) => certificate.status === "GENERADO").length,
+      value: certificates.filter((certificate) => ["GENERADO", "EMITIDO"].includes(certificate.status)).length,
     },
     {
       label: "Aprobadas",
-      value: certificates.filter((certificate) => certificate.status === "APROBADO").length,
+      value: certificates.filter((certificate) => ["APROBADO", "VERIFICADO"].includes(certificate.status)).length,
     },
     { label: "Periodos", value: periodos.size },
     { label: "Semestre", value: latestSemester },

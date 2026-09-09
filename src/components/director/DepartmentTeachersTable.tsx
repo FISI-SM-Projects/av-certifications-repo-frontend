@@ -21,10 +21,10 @@ function obtenerDepartamentoConsulta(
 
   if (role === "ADMIN") {
     return {
-      departamento: DEPARTAMENTO_ADMIN_DEMO,
+      departamento: isDemo ? DEPARTAMENTO_ADMIN_DEMO : "",
       nota: isDemo
         ? "Vista demo de ADMIN usando Ingenieria de Software hasta completar el panel administrativo."
-        : "Vista de ADMIN usando Ingenieria de Software hasta completar el panel administrativo.",
+        : "Docentes registrados en la BD institucional.",
     };
   }
 

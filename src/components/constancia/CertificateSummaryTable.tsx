@@ -36,7 +36,7 @@ export function CertificateSummaryTable({
       <div className="border-b border-[var(--border)] px-5 py-4">
         <h3 className="text-lg font-semibold text-[var(--text)]">Listado de constancias</h3>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Cada registro corresponde a la ultima version visible de una constancia logica.
+          Consulta los registros disponibles y su historial.
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export function CertificateSummaryTable({
                     >
                       Ver detalle
                     </Link>
-                    <DownloadPdfButton generationId={certificate.generationId} />
+                    {certificate.pdfAvailable === false ? <span className="text-xs">PDF no disponible</span> : <DownloadPdfButton generationId={certificate.generationId} />}
                   </div>
                 </td>
               </tr>
@@ -169,10 +169,10 @@ function buildDetailHref(generationId: string, detailReturnTo?: string): string 
 
 function CertificateStatusBadge({ status }: { status: EstadoConstancia }) {
   const className =
-    status === "APROBADO"
+    (status === "APROBADO" || status === "VERIFICADO")
       ? "border-[rgba(79,155,97,0.55)] bg-[rgba(79,155,97,0.16)] text-[#b8f0c4]"
       : "border-[rgba(201,168,93,0.55)] bg-[rgba(201,168,93,0.14)] text-[var(--gold-soft)]";
-  const label = status === "APROBADO" ? "Aprobado" : "Generado";
+  const label = status.replaceAll("_", " ");
 
   return (
     <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${className}`}>

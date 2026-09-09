@@ -1,3 +1,4 @@
+import { isCertificateStatus } from "@/types/constancia/constancia.types";
 import { API_BASE_URL } from "@/lib/api";
 import { ApiError, httpBlob, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
 import type {
@@ -242,9 +243,9 @@ function hasCommonCertificateFields(value: Record<string, unknown>): boolean {
     typeof value.certificateKey === "string" &&
     typeof value.version === "number" &&
     (value.type === "CURSO" || value.type === "SEMESTRAL") &&
-    (value.status === "GENERADO" || value.status === "APROBADO") &&
+    isCertificateStatus(value.status) &&
     typeof value.semester === "string" &&
-    typeof value.generatedAt === "string" &&
+    (typeof value.generatedAt === "string" || value.generatedAt === null) &&
     typeof value.viewUrl === "string" &&
     typeof value.downloadUrl === "string"
   );

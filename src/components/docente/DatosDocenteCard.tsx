@@ -36,7 +36,7 @@ export function DatosDocenteCard({ docente }: DatosDocenteCardProps) {
       fields: [
         { label: "Categoria", value: docente.categoria },
         { label: "Condicion", value: docente.condicion },
-        { label: "Estado", value: "Activo" },
+        { label: "Estado", value: docente.estado ?? "Activo" },
       ],
     },
   ];

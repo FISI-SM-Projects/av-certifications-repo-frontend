@@ -1,4 +1,5 @@
-export function formatDateTimeInLima(value: string): string {
+export function formatDateTimeInLima(value: string | null): string {
+  if (value === null) return "Fecha no disponible";
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {

@@ -1,4 +1,5 @@
 import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
+import type { InstitutionalContext } from "@/types/auth/auth.types";
 import type {
   DemoLoginRequest,
   DemoLoginResponse,
@@ -10,35 +11,6 @@ import type {
 
 const VALID_ROLES: RolUsuario[] = ["DOCENTE", "DIRECTOR", "ADMIN"];
 const ROLE_PRIORITY: RolUsuario[] = ["ADMIN", "DIRECTOR", "DOCENTE"];
-const DEV_LDAP_PROFILE_BY_SUBJECT: Record<
-  string,
-  Pick<UsuarioSesion, "fullName" | "email" | "departamentoAcademico" | "teacherCode">
-> = {
-  lmotaa: {
-    fullName: "LAZARO FLORIAN MOTA ALVA",
-    email: "lmotaa@unmsm.edu.pe",
-    departamentoAcademico: "Ciencias de la Computacion",
-    teacherCode: null,
-  },
-  lalarconl: {
-    fullName: "María Elena Torres Rojas",
-    email: "mtorres@unmsm.edu.pe",
-    departamentoAcademico: "Ingeniería de Software",
-    teacherCode: "082027",
-  },
-  cnavarrod: {
-    fullName: "Carlos Alberto Ramos Silva",
-    email: "cramos@unmsm.edu.pe",
-    departamentoAcademico: "Ciencia de la Computación",
-    teacherCode: "082028",
-  },
-  "aulavirtual.fisi": {
-    fullName: "AULA VIRTUAL FISI",
-    email: "aulavirtual.fisi@unmsm.edu.pe",
-    departamentoAcademico: null,
-    teacherCode: null,
-  },
-};
 
 export async function obtenerUsuariosDemo(): Promise<UsuarioSesion[]> {
   return httpJson<UsuarioSesion[]>("/api/v1/auth/demo-users", {
@@ -71,7 +43,11 @@ export async function loginReal(username: string, password: string): Promise<Usu
   });
   const claims = decodeJwtClaims(response.token);
 
-  return buildJwtSession(response, claims, request.username);
+  const context = await httpJson<InstitutionalContext>("/api/v1/auth/me", {
+    headers: { Authorization: `Bearer ${response.token}` },
+    validate: validateInstitutionalContext,
+  });
+  return buildJwtSession(response, claims, context);
 }
 
 function validateUsuariosDemo(payload: unknown): UsuarioSesion[] {
@@ -136,32 +112,33 @@ type JwtClaims = {
 function buildJwtSession(
   response: RealLoginResponse,
   claims: JwtClaims,
-  fallbackUsername: string,
+  context: InstitutionalContext,
 ): UsuarioSesion {
-  const subject = typeof claims.sub === "string" && claims.sub.trim() !== ""
-    ? claims.sub.trim()
-    : fallbackUsername;
-  const roles = normalizeJwtRoles(claims.roles);
+  const subject = context.ldapUid;
+  const roles = context.roles;
   const role = resolvePrimaryRole(roles);
-  const devProfile = DEV_LDAP_PROFILE_BY_SUBJECT[subject] ?? null;
 
+  if (role === "DOCENTE" && !context.teacher?.teacherCode) {
+    throw new ApiError("La cuenta no tiene perfil docente asociado", 403);
+  }
   if (role === null) {
     throw new ApiError("La cuenta no tiene un rol reconocido para esta interfaz.", 0);
   }
 
   return {
-    id: readNumericClaim(claims.accountId) ?? readNumericClaim(claims.personId) ?? 0,
-    fullName: devProfile?.fullName ?? subject,
-    email: devProfile?.email ?? buildEmailFallback(subject),
+    id: context.accountId,
+    fullName: context.fullName,
+    email: context.institutionalEmail,
     role,
-    departamentoAcademico: devProfile?.departamentoAcademico ?? null,
-    teacherCode: role === "DOCENTE" ? (devProfile?.teacherCode ?? null) : null,
+    departamentoAcademico: context.teacher?.department ?? null,
+    teacherCode: context.teacher?.teacherCode ?? null,
+    teacher: context.teacher,
     authMode: "jwt",
     token: response.token,
     tokenType: response.type,
     subject,
-    personId: readNumericClaim(claims.personId),
-    accountId: readNumericClaim(claims.accountId),
+    personId: context.personId,
+    accountId: context.accountId,
     expiresAt: readNumericClaim(claims.exp),
     roles,
   };
@@ -200,14 +177,6 @@ function decodeBase64Url(value: string): string {
   );
 }
 
-function normalizeJwtRoles(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.filter((role): role is string => typeof role === "string");
-}
-
 function resolvePrimaryRole(roles: string[]): RolUsuario | null {
   const normalizedRoles = roles.map(normalizeRoleName);
 
@@ -232,6 +201,26 @@ function readNumericClaim(value: unknown): number | null {
   return value;
 }
 
-function buildEmailFallback(subject: string): string {
-  return subject.includes("@") ? subject : `${subject}@unmsm.edu.pe`;
+function validateInstitutionalContext(value: unknown): InstitutionalContext {
+  if (!isRecord(value) || !Number.isSafeInteger(value.accountId) || !Number.isSafeInteger(value.personId)
+    || typeof value.ldapUid !== "string" || typeof value.fullName !== "string"
+    || typeof value.institutionalEmail !== "string" || !Array.isArray(value.roles)
+    || !value.roles.every((role) => typeof role === "string")
+    || value.accountStatus !== "ACTIVO" || value.personStatus !== "ACTIVO"
+    || !(value.teacher === null || (isRecord(value.teacher)
+      && Number.isSafeInteger(value.teacher.teacherId)
+      && typeof value.teacher.teacherCode === "string" && value.teacher.teacherCode.trim() !== ""
+      && Number.isSafeInteger(value.teacher.moodleId)
+      && (value.teacher.department === null || typeof value.teacher.department === "string")))) {
+    throw new ApiError("El contexto institucional no tiene el formato esperado", 0);
+  }
+  return value as InstitutionalContext;
+}
+
+export async function refreshRealSession(session: UsuarioSesion): Promise<UsuarioSesion> {
+  if (!session.token) throw new ApiError("Autenticacion requerida", 401);
+  const context = await httpJson<InstitutionalContext>("/api/v1/auth/me", {
+    headers: { Authorization: `Bearer ${session.token}` }, validate: validateInstitutionalContext,
+  });
+  return buildJwtSession({ token: session.token, type: "Bearer" }, decodeJwtClaims(session.token), context);
 }

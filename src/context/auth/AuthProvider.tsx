@@ -11,6 +11,8 @@ import {
 import type { ReactNode } from "react";
 
 import type { UsuarioSesion } from "@/types/auth/auth.types";
+import { refreshRealSession } from "@/services/auth/authService";
+import { isDemoMode } from "@/lib/uiMode";
 import {
   AUTH_SESSION_CLEARED_EVENT,
   eliminarSesion,
@@ -50,8 +52,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      setUser(obtenerSesion());
-      setIsLoading(false);
+      const stored = obtenerSesion();
+      if (!isDemoMode() && stored?.authMode === "jwt") {
+        void refreshRealSession(stored).then((current) => {
+          if (isMounted) { guardarSesion(current); setUser(current); }
+        }).catch(() => {
+          if (isMounted) { eliminarSesion(); setUser(null); }
+        }).finally(() => { if (isMounted) setIsLoading(false); });
+      } else {
+        const compatible = isDemoMode() && stored?.authMode !== "jwt" ? stored : null;
+        if (stored && !compatible) eliminarSesion();
+        setUser(compatible);
+        setIsLoading(false);
+      }
     });
 
     return () => {

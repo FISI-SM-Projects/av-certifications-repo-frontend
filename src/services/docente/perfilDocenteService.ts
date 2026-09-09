@@ -1,3 +1,4 @@
+import { isCertificateStatus } from "@/types/constancia/constancia.types";
 import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
 import type { PerfilDocenteResponse } from "@/types/docente/perfilDocente.types";
 
@@ -84,12 +85,12 @@ function isConstanciaPerfil(value: unknown): boolean {
     typeof value.certificateKey === "string" &&
     typeof value.version === "number" &&
     (value.type === "CURSO" || value.type === "SEMESTRAL") &&
-    (value.status === "GENERADO" || value.status === "APROBADO") &&
+    isCertificateStatus(value.status) &&
     typeof value.teacherCode === "string" &&
     (typeof value.courseCode === "string" || value.courseCode === null) &&
     (typeof value.section === "string" || value.section === null) &&
     typeof value.semester === "string" &&
-    typeof value.generatedAt === "string" &&
+    (typeof value.generatedAt === "string" || value.generatedAt === null) &&
     typeof value.viewUrl === "string" &&
     typeof value.downloadUrl === "string"
   );
