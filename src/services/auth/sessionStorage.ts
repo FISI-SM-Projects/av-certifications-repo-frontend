@@ -44,7 +44,7 @@ export function esUsuarioSesionValido(value: unknown): value is UsuarioSesion {
   }
 
   return (
-    (usuario.authMode === undefined || usuario.authMode === "demo" || usuario.authMode === "jwt") &&
+    usuario.authMode === "jwt" &&
     (usuario.token === undefined || typeof usuario.token === "string") &&
     (usuario.tokenType === undefined || typeof usuario.tokenType === "string") &&
     (usuario.subject === undefined || typeof usuario.subject === "string") &&

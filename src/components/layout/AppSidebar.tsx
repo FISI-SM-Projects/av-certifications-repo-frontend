@@ -3,10 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { DemoOnly } from "@/components/demo/DemoOnly";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
 import type { RolUsuario } from "@/types/auth/auth.types";
 
 type MenuItem = {
@@ -49,7 +47,6 @@ function isActivePath(pathname: string, href: string): boolean {
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, isLoading, isAuthenticated } = useAuth();
-  const isDemo = isDemoMode();
   const menuItems = user !== null ? MENU_BY_ROLE[user.role] : [];
 
   return (
@@ -83,17 +80,12 @@ export function AppSidebar() {
                 {user.departamentoAcademico !== null ? (
                   <p className="mt-1 text-xs text-[var(--muted)]">{user.departamentoAcademico}</p>
                 ) : null}
-                <DemoOnly>
-                  <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">
-                    Sesion simulada
-                  </p>
-                </DemoOnly>
               </>
             ) : (
               <>
                 <p className="font-semibold">Sin sesion</p>
                 <p className="mt-1 text-xs text-[var(--muted)]">
-                  {isDemo ? "Ingresa desde login demo" : "Inicia sesion para continuar"}
+                  Inicia sesion para continuar
                 </p>
               </>
             )}
@@ -147,7 +139,7 @@ export function AppSidebar() {
       <div className="mt-auto border-t border-[var(--border)] px-4 py-4">
         {isAuthenticated ? <LogoutButton className="w-full rounded-md border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]" /> : null}
         <div className="mt-4 flex items-center justify-between text-xs text-[var(--muted)]">
-          <span>{isDemo ? "Sprint 3" : "Gestion Docente"}</span>
+          <span>Gestion Docente</span>
           <span className="font-semibold text-[var(--gold-soft)]">Constancias</span>
         </div>
       </div>

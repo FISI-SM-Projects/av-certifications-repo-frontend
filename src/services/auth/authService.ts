@@ -1,8 +1,6 @@
 import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
 import type { InstitutionalContext } from "@/types/auth/auth.types";
 import type {
-  DemoLoginRequest,
-  DemoLoginResponse,
   RealLoginRequest,
   RealLoginResponse,
   RolUsuario,
@@ -11,22 +9,6 @@ import type {
 
 const VALID_ROLES: RolUsuario[] = ["DOCENTE", "DIRECTOR", "ADMIN"];
 const ROLE_PRIORITY: RolUsuario[] = ["ADMIN", "DIRECTOR", "DOCENTE"];
-
-export async function obtenerUsuariosDemo(): Promise<UsuarioSesion[]> {
-  return httpJson<UsuarioSesion[]>("/api/v1/auth/demo-users", {
-    validate: validateUsuariosDemo,
-  });
-}
-
-export async function loginDemo(email: string): Promise<DemoLoginResponse> {
-  const request: DemoLoginRequest = { email };
-
-  return httpJson<DemoLoginResponse>("/api/v1/auth/demo-login", {
-    method: "POST",
-    body: request,
-    validate: validateDemoLoginResponse,
-  });
-}
 
 export async function loginReal(username: string, password: string): Promise<UsuarioSesion> {
   const request: RealLoginRequest = {
@@ -50,22 +32,6 @@ export async function loginReal(username: string, password: string): Promise<Usu
   return buildJwtSession(response, claims, context);
 }
 
-function validateUsuariosDemo(payload: unknown): UsuarioSesion[] {
-  if (!Array.isArray(payload) || !payload.every(isUsuarioSesion)) {
-    throw new ApiError("La respuesta de usuarios demo no tiene el formato esperado.", 0);
-  }
-
-  return payload;
-}
-
-function validateDemoLoginResponse(payload: unknown): DemoLoginResponse {
-  if (!isRecord(payload) || !isUsuarioSesion(payload.user)) {
-    throw new ApiError("La respuesta de login demo no tiene el formato esperado.", 0);
-  }
-
-  return { user: { ...payload.user, authMode: "demo" } };
-}
-
 function validateRealLoginResponse(payload: unknown): RealLoginResponse {
   if (
     !isRecord(payload) ||
@@ -80,21 +46,6 @@ function validateRealLoginResponse(payload: unknown): RealLoginResponse {
     token: payload.token,
     type: payload.type,
   };
-}
-
-function isUsuarioSesion(value: unknown): value is UsuarioSesion {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return (
-    typeof value.id === "number" &&
-    typeof value.fullName === "string" &&
-    typeof value.email === "string" &&
-    isRolUsuario(value.role) &&
-    (typeof value.departamentoAcademico === "string" || value.departamentoAcademico === null) &&
-    (typeof value.teacherCode === "string" || value.teacherCode === null)
-  );
 }
 
 function isRolUsuario(value: unknown): value is RolUsuario {

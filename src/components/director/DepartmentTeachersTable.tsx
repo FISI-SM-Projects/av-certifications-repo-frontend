@@ -4,16 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
 import { obtenerDocentesPorDepartamento } from "@/services/director/directorService";
 import type { DirectorDocenteListado } from "@/types/director/director.types";
-
-const DEPARTAMENTO_ADMIN_DEMO = "Ingenieria de Software";
 
 function obtenerDepartamentoConsulta(
   role: string | undefined,
   departamentoAcademico: string | null | undefined,
-  isDemo: boolean,
 ): { departamento: string | null; nota: string | null } {
   if (departamentoAcademico !== null && departamentoAcademico !== undefined) {
     return { departamento: departamentoAcademico, nota: null };
@@ -21,10 +17,8 @@ function obtenerDepartamentoConsulta(
 
   if (role === "ADMIN") {
     return {
-      departamento: isDemo ? DEPARTAMENTO_ADMIN_DEMO : "",
-      nota: isDemo
-        ? "Vista demo de ADMIN usando Ingenieria de Software hasta completar el panel administrativo."
-        : "Docentes registrados en la BD institucional.",
+      departamento: "",
+      nota: "Docentes registrados en la BD institucional.",
     };
   }
 
@@ -36,14 +30,12 @@ function obtenerDepartamentoConsulta(
 
 export function DepartmentTeachersTable() {
   const { user } = useAuth();
-  const isDemo = isDemoMode();
   const [docentes, setDocentes] = useState<DirectorDocenteListado[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { departamento, nota } = obtenerDepartamentoConsulta(
     user?.role,
     user?.departamentoAcademico,
-    isDemo,
   );
 
   useEffect(() => {

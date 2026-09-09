@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 
-import { DemoOnly } from "@/components/demo/DemoOnly";
 import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
 
 const quickLinks = [
   {
@@ -29,34 +27,23 @@ const quickLinks = [
   },
 ];
 
-const futureModules = [
-  "Gestion de usuarios",
-  "Gestion de roles",
-  "Gestion de departamentos",
-  "Configuracion del sistema",
-  "Auditoria",
-];
-
 export function AdminDashboard() {
   const { user } = useAuth();
-  const isDemo = isDemoMode();
 
   return (
     <div className="space-y-5">
       <section className="rounded-lg border border-[var(--border)] bg-[linear-gradient(135deg,rgba(90,15,36,0.98),rgba(59,10,24,0.98))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.2)]">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-          {isDemo ? "Administracion simulada" : "Administracion"}
+          Administracion
         </p>
         <h3 className="mt-2 text-2xl font-semibold text-[var(--text)]">
           {user?.fullName ?? "Administrador del sistema"}
         </h3>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-          {isDemo
-            ? "Esta vista centraliza accesos de validacion para el rol ADMIN. No incluye gestion real, cambios de configuracion ni operaciones administrativas."
-            : "Administra accesos y consulta las vistas institucionales disponibles para el rol ADMIN."}
+          Administra accesos y consulta las vistas institucionales disponibles para el rol ADMIN.
         </p>
 
-        <div className={`mt-4 grid gap-3 ${isDemo ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div className="rounded-md border border-[var(--border-soft)] bg-[rgba(27,5,12,0.72)] p-3">
             <p className="text-xs text-[var(--muted)]">Correo</p>
             <p className="mt-1 break-words font-semibold">
@@ -67,16 +54,10 @@ export function AdminDashboard() {
             <p className="text-xs text-[var(--muted)]">Rol</p>
             <p className="mt-1 font-semibold">{user?.role ?? "Sin rol"}</p>
           </div>
-          <DemoOnly>
-            <div className="rounded-md border border-[rgba(201,168,93,0.42)] bg-[rgba(201,168,93,0.1)] p-3">
-              <p className="text-xs text-[var(--gold-soft)]">Sesion</p>
-              <p className="mt-1 font-semibold text-[var(--gold-soft)]">Simulada</p>
-            </div>
-          </DemoOnly>
         </div>
       </section>
 
-      <section className={`grid gap-4 ${isDemo ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+      <section className="grid gap-4 md:grid-cols-2">
         <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
             Areas visibles
@@ -85,22 +66,12 @@ export function AdminDashboard() {
             {quickLinks.length}
           </p>
         </article>
-        <DemoOnly>
-          <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
-              Modulos futuros
-            </p>
-            <p className="mt-3 text-3xl font-semibold text-[var(--text)]">
-              {futureModules.length}
-            </p>
-          </article>
-        </DemoOnly>
         <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
             Seguridad
           </p>
           <p className="mt-3 text-sm font-semibold text-[var(--muted)]">
-            {isDemo ? "Sin autenticacion real" : "Control de acceso institucional"}
+            Control de acceso institucional
           </p>
         </article>
       </section>
@@ -125,33 +96,6 @@ export function AdminDashboard() {
         </div>
       </section>
 
-      <DemoOnly>
-        <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
-            Modulos administrativos futuros
-          </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {futureModules.map((moduleName) => (
-              <article
-                className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 opacity-70"
-                key={moduleName}
-              >
-                <p className="font-semibold text-[var(--text)]">{moduleName}</p>
-                <p className="mt-1 text-sm text-[var(--muted)]">
-                  Disponible en sprint futuro
-                </p>
-                <button
-                  className="mt-4 cursor-not-allowed rounded-md border border-[var(--border)] px-3 py-2 text-xs font-semibold text-[var(--muted)]"
-                  disabled
-                  type="button"
-                >
-                  No disponible
-                </button>
-              </article>
-            ))}
-          </div>
-        </section>
-      </DemoOnly>
     </div>
   );
 }

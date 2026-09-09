@@ -6,10 +6,9 @@ export default function DirectorDocentesPage() {
   return (
     <RequireRole allowedRoles={["DIRECTOR", "ADMIN"]}>
       <AppShell
-        breadcrumb="Sprint 2 > Dirección > Docentes"
+        breadcrumb="Dirección > Docentes"
         title="Docentes del departamento"
         subtitle="Consulta por Departamento Académico"
-        badges={["Sesión simulada"]}
       >
         <DepartmentTeachersTable />
       </AppShell>

@@ -1,13 +1,6 @@
-import { redirect } from "next/navigation";
-
 import { RealLoginForm } from "@/components/auth/RealLoginForm";
-import { isDemoMode } from "@/lib/uiMode";
 
 export default function LoginPage() {
-  if (isDemoMode()) {
-    redirect("/login-demo");
-  }
-
   return (
     <main className="min-h-screen bg-[var(--background)] px-4 py-8 text-[var(--text)] sm:px-6 lg:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-5xl items-center">

@@ -1,8 +1,6 @@
 "use client";
 
-import { DemoOnly } from "@/components/demo/DemoOnly";
 import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
 
 export type AppHeaderProps = {
   breadcrumb?: string;
@@ -13,10 +11,8 @@ export type AppHeaderProps = {
 
 export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeaderProps) {
   const { user, isLoading, isAuthenticated } = useAuth();
-  const isDemo = isDemoMode();
   const visibleBreadcrumb =
-    isDemo || breadcrumb?.includes("Sprint") !== true ? breadcrumb : undefined;
-  const visibleBadges = isDemo ? badges : [];
+    breadcrumb?.includes("Sprint") === true ? undefined : breadcrumb;
 
   return (
     <header className="flex min-h-16 flex-col gap-3 border-b border-[var(--border)] bg-[rgba(59,10,24,0.92)] px-5 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
@@ -37,7 +33,7 @@ export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeade
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {visibleBadges.map((badge) => (
+        {badges.map((badge) => (
           <span
             className="rounded-full border border-[var(--gold)] bg-[rgba(201,168,93,0.12)] px-3 py-1 text-xs font-semibold text-[var(--gold-soft)]"
             key={badge}
@@ -52,13 +48,6 @@ export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeade
               ? `${user.fullName} · ${user.role}`
               : "Sin sesión"}
         </span>
-        {isAuthenticated ? (
-          <DemoOnly>
-            <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
-              Sesión simulada
-            </span>
-          </DemoOnly>
-        ) : null}
         <button
           className="grid h-8 w-8 place-items-center rounded-md border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--gold-soft)]"
           type="button"

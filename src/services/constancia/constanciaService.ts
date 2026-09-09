@@ -198,10 +198,7 @@ function validateSemesterCertificateResponse(payload: unknown): SemesterCertific
 
   if (
     typeof payload.teacherCode !== "string" ||
-    typeof payload.teacherFullName !== "string" ||
-    typeof payload.courseCount !== "number" ||
-    !Array.isArray(payload.sourceGenerationIds) ||
-    !payload.sourceGenerationIds.every((id) => typeof id === "string")
+    typeof payload.teacherFullName !== "string"
   ) {
     throw new ApiError("La respuesta de generacion semestral no es valida.", 0);
   }
@@ -243,6 +240,7 @@ function hasCommonCertificateFields(value: Record<string, unknown>): boolean {
     typeof value.certificateKey === "string" &&
     typeof value.version === "number" &&
     (value.type === "CURSO" || value.type === "SEMESTRAL") &&
+    (value.certificateType === undefined || value.certificateType === "COURSE" || value.certificateType === "SEMESTER") &&
     isCertificateStatus(value.status) &&
     typeof value.semester === "string" &&
     (typeof value.generatedAt === "string" || value.generatedAt === null) &&

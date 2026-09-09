@@ -1,6 +1,6 @@
 export type RolUsuario = "DOCENTE" | "DIRECTOR" | "ADMIN";
 
-export type AuthMode = "demo" | "jwt";
+export type AuthMode = "jwt";
 
 export type UsuarioSesion = {
   id: number;
@@ -32,14 +32,6 @@ export type InstitutionalContext = {
   teacher: { teacherId: number; teacherCode: string; moodleId: number; department: string | null } | null;
   student: null;
   administrative: null;
-};
-
-export type DemoLoginRequest = {
-  email: string;
-};
-
-export type DemoLoginResponse = {
-  user: UsuarioSesion;
 };
 
 export type RealLoginRequest = {

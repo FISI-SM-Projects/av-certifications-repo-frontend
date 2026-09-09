@@ -281,11 +281,11 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
 
 function buildDetailItems(certificate: CertificateGenerationDetail): DetailItem[] {
   return [
-    { label: "Tipo", value: certificate.type },
+    { label: "Tipo", value: certificate.certificateType === "SEMESTER" ? "Semestral" : "Curso" },
     { label: "Estado", value: certificate.status },
     { label: "Versión", value: `v${String(certificate.version).padStart(3, "0")}` },
     { label: "Código docente", value: certificate.teacherCode },
-    { label: "Código de curso", value: certificate.courseCode ?? "Constancia semestral" },
+    { label: "Código de curso", value: certificate.courseCode ?? "No aplica para constancia semestral" },
     { label: "Sección", value: certificate.section ?? "No aplica" },
     { label: "Semestre", value: certificate.semester },
     { label: "Fecha de generación", value: formatDateTimeInLima(certificate.generatedAt) },

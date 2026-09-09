@@ -1,4 +1,5 @@
 export type TipoConstancia = "CURSO" | "SEMESTRAL";
+export type CertificationType = "COURSE" | "SEMESTER";
 
 export const CERTIFICATE_STATUSES = ["GENERADO", "APROBADO", "EMITIDO", "VERIFICADO", "EN_REVISION", "NO_EMITIDO", "REVOCADO"] as const;
 export type EstadoConstancia = typeof CERTIFICATE_STATUSES[number];
@@ -50,6 +51,7 @@ export type CourseCertificateResponse = {
   certificateKey: string;
   version: number;
   type: TipoConstancia;
+  certificateType: CertificationType;
   status: EstadoConstancia;
   teacherFullName: string;
   courseCode: string;
@@ -66,12 +68,11 @@ export type SemesterCertificateResponse = {
   certificateKey: string;
   version: number;
   type: "SEMESTRAL";
+  certificateType: "SEMESTER";
   status: EstadoConstancia;
   teacherCode: string;
   teacherFullName: string;
   semester: string;
-  courseCount: number;
-  sourceGenerationIds: string[];
   generatedAt: string;
   viewUrl: string;
   downloadUrl: string;
@@ -84,6 +85,7 @@ export type CertificateGenerationSummary = {
   certificateKey: string;
   version: number;
   type: TipoConstancia;
+  certificateType?: CertificationType;
   status: EstadoConstancia;
   teacherCode: string;
   courseCode: string | null;

@@ -4,8 +4,6 @@ import { obtenerTokenSesion, eliminarSesion } from "@/services/auth/sessionStora
 const DEFAULT_TIMEOUT_MS = 10_000;
 const PUBLIC_API_PATHS = [
   "/api/v1/auth/login",
-  "/api/v1/auth/demo-login",
-  "/api/v1/auth/demo-users",
   "/api/v1/health",
 ];
 

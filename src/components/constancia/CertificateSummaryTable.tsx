@@ -74,7 +74,7 @@ export function CertificateSummaryTable({
                   <td className="px-4 py-4 text-[var(--muted)]">{certificate.teacherCode}</td>
                 ) : null}
                 <td className="break-words px-4 py-4 font-medium text-[var(--text)]">
-                  {certificate.courseCode ?? "Constancia semestral"}
+                  {certificate.courseCode ?? "Consolidacion semestral"}
                 </td>
                 <td className="px-4 py-4 text-[var(--muted)]">
                   {certificate.section ?? "No aplica"}

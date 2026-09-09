@@ -1,4 +1,3 @@
-import { DemoOnly } from "@/components/demo/DemoOnly";
 import type { Docente } from "@/types/docente/perfilDocente.types";
 
 type PerfilDocenteHeaderProps = {
@@ -32,9 +31,6 @@ export function PerfilDocenteHeader({ docente }: PerfilDocenteHeaderProps) {
           <HeaderBadge label="Rol" value="DOCENTE" />
           <HeaderBadge label="Departamento" value={docente.departamentoAcademico} />
           <HeaderBadge label="Estado" value={docente.estado ?? "Activo"} tone="success" />
-          <DemoOnly>
-            <HeaderBadge label="Estado de datos" value="Datos simulados" />
-          </DemoOnly>
         </div>
       </div>
     </section>

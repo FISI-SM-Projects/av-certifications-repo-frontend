@@ -3,12 +3,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { CertificateSummaryTable } from "@/components/constancia/CertificateSummaryTable";
+import { SemesterCertificateGenerationForm } from "@/components/constancia/SemesterCertificateGenerationForm";
 import { AcademicWorkloadTable } from "@/components/docente/AcademicWorkloadTable";
-import { SemesterCertificateSimulationForm } from "@/components/constancia/SemesterCertificateSimulationForm";
-import { DemoOnly } from "@/components/demo/DemoOnly";
-import { CourseCertificateSimulationForm } from "@/components/demo/constancia/CourseCertificateSimulationForm";
 import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
 import { listarConstanciasDocente } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type { CertificateGenerationSummary } from "@/types/constancia/constancia.types";
@@ -21,12 +18,10 @@ type SummaryItem = {
 
 export function TeacherCertificatesView() {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const isDemo = isDemoMode();
   const teacherCode = obtenerTeacherCodeDeSesion(user);
   const [certificates, setCertificates] = useState<CertificateGenerationSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSimulationFormOpen, setIsSimulationFormOpen] = useState(false);
 
   const loadCertificates = useCallback(async () => {
     if (teacherCode === null) {
@@ -86,11 +81,6 @@ export function TeacherCertificatesView() {
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            <DemoOnly>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-                Aula Virtual simulada
-              </p>
-            </DemoOnly>
             <h2 className="mt-1 text-2xl font-semibold text-[var(--text)]">Mis constancias</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
               Consulta, visualizacion y descarga de constancias generadas.
@@ -101,15 +91,6 @@ export function TeacherCertificatesView() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-            <DemoOnly>
-              <button
-                className="min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-                onClick={() => setIsSimulationFormOpen(true)}
-                type="button"
-              >
-                Simular recepcion desde Aula Virtual
-              </button>
-            </DemoOnly>
             <button
               className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isLoading}
@@ -122,27 +103,13 @@ export function TeacherCertificatesView() {
         </div>
       </section>
 
-      <DemoOnly>
-        {isSimulationFormOpen ? (
-          <CourseCertificateSimulationForm
-            onCancel={() => setIsSimulationFormOpen(false)}
-            onGenerated={loadCertificates}
-            teacherCode={teacherCode}
-            user={user}
-          />
-        ) : null}
-      </DemoOnly>
-
-      <DemoOnly>
-        <SemesterCertificateSimulationForm
-          certificates={certificates}
-          onGenerated={loadCertificates}
-          teacherCode={teacherCode}
-        />
-      </DemoOnly>
-
       {isLoading ? <PanelMessage message="Cargando constancias..." /> : null}
-      {!isDemo && <AcademicWorkloadTable teacherCode={teacherCode} onGenerated={loadCertificates} />}
+      <AcademicWorkloadTable teacherCode={teacherCode} onGenerated={loadCertificates} />
+      <SemesterCertificateGenerationForm
+        certificates={certificates}
+        onGenerated={loadCertificates}
+        teacherCode={teacherCode}
+      />
 
       {!isLoading && errorMessage !== null ? (
         <PanelMessage
@@ -165,11 +132,7 @@ export function TeacherCertificatesView() {
         <PanelMessage
           eyebrow="Sin constancias"
           title="Aun no tienes constancias generadas."
-          message={
-            isDemo
-              ? "Las constancias apareceran aqui cuando sean generadas desde la simulacion de Aula Virtual."
-              : "Las constancias apareceran aqui cuando esten disponibles para tu perfil."
-          }
+          message="Las constancias apareceran aqui cuando esten disponibles para tu perfil."
         />
       ) : null}
 

@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
 
 type RequireSessionProps = {
   children: ReactNode;
@@ -24,13 +23,12 @@ function LoadingState() {
 export function RequireSession({ children }: RequireSessionProps) {
   const router = useRouter();
   const { isLoading, isAuthenticated } = useAuth();
-  const loginPath = isDemoMode() ? "/login-demo" : "/login";
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace(loginPath);
+      router.replace("/login");
     }
-  }, [isLoading, isAuthenticated, loginPath, router]);
+  }, [isLoading, isAuthenticated, router]);
 
   if (isLoading) {
     return <LoadingState />;

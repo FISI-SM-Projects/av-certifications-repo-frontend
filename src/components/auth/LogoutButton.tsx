@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
 
 type LogoutButtonProps = {
   className?: string;
@@ -12,11 +11,10 @@ type LogoutButtonProps = {
 export function LogoutButton({ className }: LogoutButtonProps) {
   const router = useRouter();
   const { logout } = useAuth();
-  const loginPath = isDemoMode() ? "/login-demo" : "/login";
 
   function handleLogout() {
     logout();
-    router.push(loginPath);
+    router.push("/login");
   }
 
   return (
