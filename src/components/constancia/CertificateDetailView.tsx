@@ -14,6 +14,7 @@ import type {
   CertificateGenerationDetail,
   EstadoConstancia,
 } from "@/types/constancia/constancia.types";
+import { displayCertificateStatus, isSignedStatus } from "@/utils/constancia/certificateStatus";
 import { formatDateTimeInLima } from "@/utils/dates";
 
 type CertificateDetailViewProps = {
@@ -296,10 +297,10 @@ function buildDetailItems(certificate: CertificateGenerationDetail): DetailItem[
 
 function CertificateStatusBadge({ status }: { status: EstadoConstancia }) {
   const className =
-    (status === "APROBADO" || status === "VERIFICADO")
+    isSignedStatus(status)
       ? "border-[rgba(79,155,97,0.55)] bg-[rgba(79,155,97,0.16)] text-[#b8f0c4]"
       : "border-[rgba(201,168,93,0.55)] bg-[rgba(201,168,93,0.14)] text-[var(--gold-soft)]";
-  const label = status.replaceAll("_", " ");
+  const label = displayCertificateStatus(status);
 
   return (
     <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${className}`}>

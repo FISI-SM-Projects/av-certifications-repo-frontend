@@ -1,7 +1,7 @@
 export type TipoConstancia = "CURSO" | "SEMESTRAL";
 export type CertificationType = "COURSE" | "SEMESTER";
 
-export const CERTIFICATE_STATUSES = ["GENERADO", "APROBADO", "EMITIDO", "VERIFICADO", "EN_REVISION", "NO_EMITIDO", "REVOCADO"] as const;
+export const CERTIFICATE_STATUSES = ["GENERADA", "FIRMADA", "GENERADO", "APROBADO", "EMITIDO", "VERIFICADO", "EN_REVISION", "NO_EMITIDO", "REVOCADO"] as const;
 export type EstadoConstancia = typeof CERTIFICATE_STATUSES[number];
 export function isCertificateStatus(value: unknown): value is EstadoConstancia {
   return typeof value === "string" && CERTIFICATE_STATUSES.includes(value as EstadoConstancia);

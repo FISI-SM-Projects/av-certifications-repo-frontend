@@ -1,4 +1,5 @@
 import type { ConstanciaPerfil } from "@/types/docente/perfilDocente.types";
+import { isGeneratedStatus, isSignedStatus } from "@/utils/constancia/certificateStatus";
 
 type ResumenConstanciasCardProps = {
   constancias: ConstanciaPerfil[];
@@ -6,10 +7,10 @@ type ResumenConstanciasCardProps = {
 
 export function ResumenConstanciasCard({ constancias }: ResumenConstanciasCardProps) {
   const generadas = constancias.filter(
-    (constancia) => ["GENERADO", "EMITIDO"].includes(constancia.status),
+    (constancia) => isGeneratedStatus(constancia.status),
   ).length;
   const aprobadas = constancias.filter(
-    (constancia) => ["APROBADO", "VERIFICADO"].includes(constancia.status),
+    (constancia) => isSignedStatus(constancia.status),
   ).length;
   const ultimoPeriodo = constancias[0]?.semester ?? "Sin periodo";
 
@@ -26,7 +27,7 @@ export function ResumenConstanciasCard({ constancias }: ResumenConstanciasCardPr
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Total constancias" value={constancias.length} />
         <MetricCard label="Generadas" value={generadas} />
-        <MetricCard label="Aprobadas" value={aprobadas} />
+        <MetricCard label="Firmadas" value={aprobadas} />
         <MetricCard label="Ultimo periodo" value={ultimoPeriodo} />
       </div>
     </section>

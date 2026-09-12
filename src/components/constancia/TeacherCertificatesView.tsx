@@ -9,6 +9,8 @@ import { useAuth } from "@/context/auth/AuthProvider";
 import { listarConstanciasDocente } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type { CertificateGenerationSummary } from "@/types/constancia/constancia.types";
+import type { AcademicWorkload } from "@/types/docente/workload.types";
+import { isGeneratedStatus, isSignedStatus } from "@/utils/constancia/certificateStatus";
 import { obtenerTeacherCodeDeSesion } from "@/utils/constancia/sessionTeacher";
 
 type SummaryItem = {
@@ -20,6 +22,7 @@ export function TeacherCertificatesView() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const teacherCode = obtenerTeacherCodeDeSesion(user);
   const [certificates, setCertificates] = useState<CertificateGenerationSummary[]>([]);
+  const [workloads, setWorkloads] = useState<AcademicWorkload[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -104,11 +107,17 @@ export function TeacherCertificatesView() {
       </section>
 
       {isLoading ? <PanelMessage message="Cargando constancias..." /> : null}
-      <AcademicWorkloadTable certificates={certificates} teacherCode={teacherCode} onGenerated={loadCertificates} />
+      <AcademicWorkloadTable
+        certificates={certificates}
+        onGenerated={loadCertificates}
+        onWorkloadsLoaded={setWorkloads}
+        teacherCode={teacherCode}
+      />
       <SemesterCertificateGenerationForm
         certificates={certificates}
         onGenerated={loadCertificates}
         teacherCode={teacherCode}
+        workloads={workloads}
       />
 
       {!isLoading && errorMessage !== null ? (
@@ -164,11 +173,11 @@ function buildSummary(certificates: CertificateGenerationSummary[]): SummaryItem
     { label: "Visibles", value: certificates.length },
     {
       label: "Generadas",
-      value: certificates.filter((certificate) => ["GENERADO", "EMITIDO"].includes(certificate.status)).length,
+      value: certificates.filter((certificate) => isGeneratedStatus(certificate.status)).length,
     },
     {
-      label: "Aprobadas",
-      value: certificates.filter((certificate) => ["APROBADO", "VERIFICADO"].includes(certificate.status)).length,
+      label: "Firmadas",
+      value: certificates.filter((certificate) => isSignedStatus(certificate.status)).length,
     },
     { label: "Periodos", value: periodos.size },
     { label: "Semestre", value: latestSemester },

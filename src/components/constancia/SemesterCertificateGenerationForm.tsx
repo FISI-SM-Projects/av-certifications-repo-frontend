@@ -8,32 +8,35 @@ import type {
   CertificateGenerationSummary,
   SemesterCertificateRequest,
 } from "@/types/constancia/constancia.types";
+import type { AcademicWorkload } from "@/types/docente/workload.types";
+import { isSignedStatus, isUsableCertificateStatus } from "@/utils/constancia/certificateStatus";
 
 type SemesterCertificateGenerationFormProps = {
   certificates: CertificateGenerationSummary[];
   teacherCode: string;
+  workloads?: AcademicWorkload[];
   onGenerated: () => Promise<void> | void;
 };
-
-const VALID_COURSE_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO"]);
-const VALID_SEMESTER_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO", "EN_REVISION"]);
-const APPROVED_STATUSES = new Set(["VERIFICADO", "APROBADO"]);
 
 export function SemesterCertificateGenerationForm({
   certificates,
   teacherCode,
+  workloads = [],
   onGenerated,
 }: SemesterCertificateGenerationFormProps) {
   const availableSemesters = useMemo(() => buildAvailableSemesters(certificates), [certificates]);
   const [selectedSemester, setSelectedSemester] = useState(availableSemesters[0]?.semester ?? "");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [requiresIncompleteConfirmation, setRequiresIncompleteConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const activeSemester = selectedSemester || availableSemesters[0]?.semester || "";
   const selectedSummary = availableSemesters.find((item) => item.semester === activeSemester);
   const semesterCertificate = selectedSummary?.semesterCertificate ?? null;
-  const semesterIsApproved = semesterCertificate ? APPROVED_STATUSES.has(semesterCertificate.status) : false;
+  const semesterIsApproved = semesterCertificate ? isSignedStatus(semesterCertificate.status) : false;
+  const expectedWorkloadCount = workloads.filter((workload) => workload.academicPeriod === activeSemester).length;
+  const hasIncompleteSemesterSource = selectedSummary !== undefined && expectedWorkloadCount > selectedSummary.count;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,7 +51,14 @@ export function SemesterCertificateGenerationForm({
     }
 
     if (semesterIsApproved) {
-      setErrorMessage("La constancia semestral para este periodo ya fue verificada y no puede regenerarse.");
+      setErrorMessage("La constancia semestral para este periodo ya fue firmada y no puede regenerarse.");
+      return;
+    }
+
+    if (hasIncompleteSemesterSource && !requiresIncompleteConfirmation) {
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      setRequiresIncompleteConfirmation(true);
       return;
     }
 
@@ -65,8 +75,9 @@ export function SemesterCertificateGenerationForm({
     try {
       const response = await generarConstanciaSemestral(request);
       setSuccessMessage(semesterCertificate?.generationId === response.generationId
-        ? "No se genero una nueva version porque no hay cambios respecto a la constancia semestral vigente."
+        ? "No se genero una nueva version porque no hay cambios academicos respecto a la version vigente."
         : `Constancia semestral ${response.generationId} generada correctamente.`);
+      setRequiresIncompleteConfirmation(false);
       await onGenerated();
     } catch (error) {
       if (error instanceof ConstanciaApiError) {
@@ -97,8 +108,8 @@ export function SemesterCertificateGenerationForm({
             constancias por curso disponibles
             {selectedSummary.semesterCertificate ? (
               <span className="mt-1 block text-[var(--gold-soft)]">
-                {APPROVED_STATUSES.has(selectedSummary.semesterCertificate.status)
-                  ? "Constancia semestral verificada"
+                {isSignedStatus(selectedSummary.semesterCertificate.status)
+                  ? "Constancia semestral firmada"
                   : "Constancia semestral vigente regenerable"}
               </span>
             ) : null}
@@ -128,7 +139,10 @@ export function SemesterCertificateGenerationForm({
               className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)]"
               disabled={availableSemesters.length === 0 || isSubmitting}
               id="semester-value"
-              onChange={(event: ChangeEvent<HTMLSelectElement>) => setSelectedSemester(event.target.value)}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                setSelectedSemester(event.target.value);
+                setRequiresIncompleteConfirmation(false);
+              }}
               value={activeSemester}
             >
               {availableSemesters.length === 0 ? (
@@ -149,7 +163,7 @@ export function SemesterCertificateGenerationForm({
           type="submit"
         >
           {semesterIsApproved
-            ? "Constancia semestral verificada"
+            ? "Constancia semestral firmada"
             : isSubmitting
               ? "Generando constancia semestral..."
               : semesterCertificate
@@ -173,6 +187,13 @@ export function SemesterCertificateGenerationForm({
             tone="error"
           />
         ) : null}
+        {requiresIncompleteConfirmation ? (
+          <FeedbackPanel
+            message="Aun no se han generado constancias para todos los cursos del periodo. La constancia semestral solo incluira las constancias existentes. Vuelva a presionar el boton para continuar."
+            title="Consolidacion parcial"
+            tone="warning"
+          />
+        ) : null}
         {successMessage ? (
           <FeedbackPanel
             message={successMessage}
@@ -194,7 +215,7 @@ function buildAvailableSemesters(
   certificates
     .filter((certificate) =>
       (certificate.certificateType === "COURSE" || certificate.type === "CURSO") &&
-      VALID_COURSE_STATUSES.has(certificate.status),
+      isUsableCertificateStatus(certificate.status),
     )
     .forEach((certificate) => {
       const workloadIds = bySemester.get(certificate.semester) ?? new Set<string>();
@@ -205,7 +226,7 @@ function buildAvailableSemesters(
   certificates
     .filter((certificate) =>
       (certificate.certificateType === "SEMESTER" || certificate.type === "SEMESTRAL") &&
-      VALID_SEMESTER_STATUSES.has(certificate.status),
+      isUsableCertificateStatus(certificate.status),
     )
     .forEach((certificate) => {
       const current = generatedSemesters.get(certificate.semester);

@@ -106,7 +106,7 @@ export function DirectorDashboard() {
         </article>
         <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
-            Constancias aprobadas
+            Constancias firmadas
           </p>
           <p className="mt-3 text-sm font-semibold text-[var(--muted)]">Próximo sprint</p>
         </article>

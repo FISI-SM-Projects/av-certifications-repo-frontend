@@ -4,17 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { getAcademicWorkload, generateWorkloadCertificate } from "@/services/docente/workloadService";
 import type { CertificateGenerationSummary } from "@/types/constancia/constancia.types";
 import type { AcademicWorkload } from "@/types/docente/workload.types";
+import { isSignedStatus, isUsableCertificateStatus } from "@/utils/constancia/certificateStatus";
 
 type AcademicWorkloadTableProps = {
   teacherCode: string;
   certificates?: CertificateGenerationSummary[];
   onGenerated?: () => Promise<void>;
+  onWorkloadsLoaded?: (rows: AcademicWorkload[]) => void;
 };
 
-const VALID_GENERATED_STATUSES = new Set(["EMITIDO", "VERIFICADO", "GENERADO", "APROBADO", "EN_REVISION"]);
-const APPROVED_STATUSES = new Set(["VERIFICADO", "APROBADO"]);
-
-export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenerated }: AcademicWorkloadTableProps) {
+export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenerated, onWorkloadsLoaded }: AcademicWorkloadTableProps) {
   const [rows, setRows] = useState<AcademicWorkload[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +25,7 @@ export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenera
     certificates
       .filter((certificate) =>
         (certificate.certificateType === "COURSE" || certificate.type === "CURSO") &&
-        VALID_GENERATED_STATUSES.has(certificate.status),
+        isUsableCertificateStatus(certificate.status),
       )
       .forEach((certificate) => {
         const match = /^workload-(\d+)$/.exec(certificate.certificateKey);
@@ -44,19 +43,19 @@ export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenera
   useEffect(() => {
     const controller = new AbortController();
     void getAcademicWorkload(teacherCode, controller.signal).then((data) => {
-      if (!controller.signal.aborted) { setRows(data); setError(null); }
+      if (!controller.signal.aborted) { setRows(data); setError(null); onWorkloadsLoaded?.(data); }
     }).catch((e: unknown) => {
       if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "No se pudo cargar la carga academica");
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [teacherCode, retry]);
+  }, [teacherCode, onWorkloadsLoaded, retry]);
   async function generate(id: number) {
     setGenerating(id); setError(null); setMessage(null);
     try {
       const existingCertificate = certificatesByWorkloadId.get(id);
       const response = await generateWorkloadCertificate(id);
       setMessage(existingCertificate?.generationId === response.generationId
-        ? "No se genero una nueva version porque no hay cambios respecto a la constancia vigente."
+        ? "No se genero una nueva version porque no hay cambios academicos respecto a la version vigente."
         : existingCertificate
           ? "Constancia regenerada correctamente."
           : "Constancia generada correctamente.");
@@ -77,10 +76,10 @@ export function AcademicWorkloadTable({ certificates = [], teacherCode, onGenera
         </tr></thead>
         <tbody>{rows.map((row) => {
           const certificate = certificatesByWorkloadId.get(row.academicWorkloadId);
-          const isApproved = certificate ? APPROVED_STATUSES.has(certificate.status) : false;
+          const isApproved = certificate ? isSignedStatus(certificate.status) : false;
           const actionLabel = certificate
             ? isApproved
-              ? "Verificada"
+              ? "Firmada"
               : "Regenerar constancia"
             : "Generar constancia";
 
