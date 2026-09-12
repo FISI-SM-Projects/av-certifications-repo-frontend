@@ -1,5 +1,6 @@
 import { isCertificateStatus } from "@/types/constancia/constancia.types";
 import { API_BASE_URL } from "@/lib/api";
+import { API_ROUTES } from "@/config/apiRoutes";
 import { ApiError, httpBlob, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
 import type {
   CertificateGenerationDetail,
@@ -21,7 +22,7 @@ const ERROR_SOLICITUD = "No se pudo completar la solicitud de constancias";
 export async function generarConstanciaCurso(
   request: CourseCertificateRequest,
 ): Promise<CourseCertificateResponse> {
-  return requestConstancia<CourseCertificateResponse>("/api/v1/constancias/curso", {
+  return requestConstancia<CourseCertificateResponse>(API_ROUTES.LEGACY_CERTIFICATE_COURSE, {
     method: "POST",
     body: request,
     validate: validateCourseCertificateResponse,
@@ -31,7 +32,7 @@ export async function generarConstanciaCurso(
 export async function generarConstanciaSemestral(
   request: SemesterCertificateRequest,
 ): Promise<SemesterCertificateResponse> {
-  return requestConstancia<SemesterCertificateResponse>("/api/v1/constancias/semestral", {
+  return requestConstancia<SemesterCertificateResponse>(API_ROUTES.LEGACY_CERTIFICATE_SEMESTER, {
     method: "POST",
     body: request,
     validate: validateSemesterCertificateResponse,
@@ -44,7 +45,7 @@ export async function listarConstanciasDocente(
   const codigoDocente = requireNonBlank(teacherCode, "El codigo docente es obligatorio");
 
   return requestConstancia<CertificateGenerationSummary[]>(
-    `/api/v1/constancias/docentes/${encodeURIComponent(codigoDocente)}`,
+    API_ROUTES.legacyTeacherCertificates(codigoDocente),
     {
       validate: validateCertificateGenerationList,
     },
@@ -60,7 +61,7 @@ export async function obtenerConstanciaPorGeneracion(
   );
 
   return requestConstancia<CertificateGenerationDetail>(
-    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}`,
+    API_ROUTES.legacyCertificateDetail(idGeneracion),
     {
       validate: validateCertificateGenerationSummary,
     },
@@ -76,7 +77,7 @@ export async function obtenerHistorialConstancia(
   );
 
   return requestConstancia<CertificateHistoryItem[]>(
-    `/api/v1/constancias/certificados/${encodeURIComponent(claveConstancia)}/historial`,
+    API_ROUTES.legacyCertificateHistory(claveConstancia),
     {
       validate: validateCertificateGenerationList,
     },
@@ -89,7 +90,7 @@ export function construirUrlVisualizacionPdf(generationId: string): string {
     "El identificador de generacion es obligatorio",
   );
 
-  return `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/pdf`;
+  return `${API_BASE_URL}${API_ROUTES.legacyCertificatePdf(idGeneracion)}`;
 }
 
 export function construirUrlDescargaPdf(generationId: string): string {
@@ -98,7 +99,7 @@ export function construirUrlDescargaPdf(generationId: string): string {
     "El identificador de generacion es obligatorio",
   );
 
-  return `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/download`;
+  return `${API_BASE_URL}${API_ROUTES.legacyCertificateDownload(idGeneracion)}`;
 }
 
 export async function obtenerPdfConstancia(generationId: string): Promise<Blob> {
@@ -108,7 +109,7 @@ export async function obtenerPdfConstancia(generationId: string): Promise<Blob> 
   );
 
   return requestConstanciaBlob(
-    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/pdf`,
+    API_ROUTES.legacyCertificatePdf(idGeneracion),
   );
 }
 
@@ -119,7 +120,7 @@ export async function descargarPdfConstancia(generationId: string): Promise<Blob
   );
 
   return requestConstanciaBlob(
-    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/download`,
+    API_ROUTES.legacyCertificateDownload(idGeneracion),
   );
 }
 

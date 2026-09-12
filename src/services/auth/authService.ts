@@ -1,9 +1,11 @@
 import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
+import { API_ROUTES } from "@/config/apiRoutes";
 import type { InstitutionalContext } from "@/types/auth/auth.types";
 import type {
   RealLoginRequest,
   RealLoginResponse,
   RolUsuario,
+  TeacherMe,
   UsuarioSesion,
 } from "@/types/auth/auth.types";
 
@@ -16,7 +18,7 @@ export async function loginReal(username: string, password: string): Promise<Usu
     password,
   };
 
-  const response = await httpJson<RealLoginResponse>("/api/v1/auth/login", {
+  const response = await httpJson<RealLoginResponse>(API_ROUTES.AUTH_LOGIN, {
     method: "POST",
     body: request,
     validate: validateRealLoginResponse,
@@ -25,11 +27,15 @@ export async function loginReal(username: string, password: string): Promise<Usu
   });
   const claims = decodeJwtClaims(response.token);
 
-  const context = await httpJson<InstitutionalContext>("/api/v1/auth/me", {
+  const context = await httpJson<InstitutionalContext>(API_ROUTES.AUTH_CONTEXT_LEGACY, {
     headers: { Authorization: `Bearer ${response.token}` },
     validate: validateInstitutionalContext,
   });
-  return buildJwtSession(response, claims, context);
+  const teacher = await httpJson<TeacherMe>(API_ROUTES.TEACHER_ME, {
+    headers: { Authorization: `Bearer ${response.token}` },
+    validate: validateTeacherMeEnvelope,
+  });
+  return buildJwtSession(response, claims, context, teacher);
 }
 
 function validateRealLoginResponse(payload: unknown): RealLoginResponse {
@@ -78,12 +84,15 @@ function buildJwtSession(
   response: RealLoginResponse,
   claims: JwtClaims,
   context: InstitutionalContext,
+  teacher: TeacherMe | null,
 ): UsuarioSesion {
   const subject = context.ldapUid;
   const roles = context.roles;
   const role = resolvePrimaryRole(roles);
+  const teacherCode = teacher?.code ?? context.teacher?.teacherCode ?? null;
+  const department = teacher?.department ?? context.teacher?.department ?? null;
 
-  if (role === "DOCENTE" && !context.teacher?.teacherCode) {
+  if (role === "DOCENTE" && !teacherCode) {
     throw new ApiError("La cuenta no tiene perfil docente asociado", 403);
   }
   if (role === null) {
@@ -92,12 +101,14 @@ function buildJwtSession(
 
   return {
     id: context.accountId,
-    fullName: context.fullName,
-    email: context.institutionalEmail,
+    fullName: teacher ? `${teacher.firstName} ${teacher.paternalLastName}${teacher.maternalLastName ? ` ${teacher.maternalLastName}` : ""}` : context.fullName,
+    email: teacher?.email ?? context.institutionalEmail,
     role,
-    departamentoAcademico: context.teacher?.department ?? null,
-    teacherCode: context.teacher?.teacherCode ?? null,
-    teacher: context.teacher,
+    departamentoAcademico: department,
+    teacherCode,
+    teacher: teacher
+      ? { teacherId: teacher.id, teacherCode: teacher.code, moodleId: teacher.moodleId, department }
+      : context.teacher,
     authMode: "jwt",
     token: response.token,
     tokenType: response.type,
@@ -182,10 +193,34 @@ function validateInstitutionalContext(value: unknown): InstitutionalContext {
   return value as InstitutionalContext;
 }
 
+function validateTeacherMeEnvelope(value: unknown): TeacherMe {
+  if (!isRecord(value) || value.success !== true || !isRecord(value.data)) {
+    throw new ApiError("El perfil docente oficial no tiene el formato esperado", 0);
+  }
+
+  const teacher = value.data;
+  if (!Number.isSafeInteger(teacher.id) || !Number.isSafeInteger(teacher.personId)
+    || !Number.isSafeInteger(teacher.moodleId) || typeof teacher.code !== "string"
+    || !(teacher.dni === null || typeof teacher.dni === "string")
+    || typeof teacher.email !== "string" || typeof teacher.firstName !== "string"
+    || typeof teacher.paternalLastName !== "string"
+    || !(teacher.maternalLastName === null || typeof teacher.maternalLastName === "string")
+    || !(teacher.department === null || typeof teacher.department === "string")
+    || typeof teacher.registerState !== "string") {
+    throw new ApiError("El perfil docente oficial no tiene el formato esperado", 0);
+  }
+
+  return teacher as TeacherMe;
+}
+
 export async function refreshRealSession(session: UsuarioSesion): Promise<UsuarioSesion> {
   if (!session.token) throw new ApiError("Autenticacion requerida", 401);
-  const context = await httpJson<InstitutionalContext>("/api/v1/auth/me", {
+  const context = await httpJson<InstitutionalContext>(API_ROUTES.AUTH_CONTEXT_LEGACY, {
     headers: { Authorization: `Bearer ${session.token}` }, validate: validateInstitutionalContext,
   });
-  return buildJwtSession({ token: session.token, type: "Bearer" }, decodeJwtClaims(session.token), context);
+  const teacher = await httpJson<TeacherMe>(API_ROUTES.TEACHER_ME, {
+    headers: { Authorization: `Bearer ${session.token}` },
+    validate: validateTeacherMeEnvelope,
+  });
+  return buildJwtSession({ token: session.token, type: "Bearer" }, decodeJwtClaims(session.token), context, teacher);
 }

@@ -1,14 +1,13 @@
 import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
+import { API_ROUTES } from "@/config/apiRoutes";
 import type { PerfilDocenteResponse } from "@/types/docente/perfilDocente.types";
 import type { DirectorDocenteListado } from "@/types/director/director.types";
 
 export async function obtenerDocentesPorDepartamento(
   departamentoAcademico: string,
 ): Promise<DirectorDocenteListado[]> {
-  const departamento = encodeURIComponent(departamentoAcademico.trim());
-
   return httpJson<DirectorDocenteListado[]>(
-    `/api/v1/director/docentes?departamentoAcademico=${departamento}`,
+    API_ROUTES.legacyDirectorTeachers(departamentoAcademico.trim()),
     {
       validate: validateDirectorDocenteList,
     },

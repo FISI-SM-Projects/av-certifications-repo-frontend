@@ -34,6 +34,20 @@ export type InstitutionalContext = {
   administrative: null;
 };
 
+export type TeacherMe = {
+  id: number;
+  personId: number;
+  moodleId: number;
+  code: string;
+  dni: string | null;
+  email: string;
+  firstName: string;
+  paternalLastName: string;
+  maternalLastName: string | null;
+  department: string | null;
+  registerState: string;
+};
+
 export type RealLoginRequest = {
   username: string;
   password: string;

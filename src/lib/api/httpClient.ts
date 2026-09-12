@@ -1,9 +1,10 @@
 import { buildApiUrl } from "@/lib/api";
+import { API_ROUTES } from "@/config/apiRoutes";
 import { obtenerTokenSesion, eliminarSesion } from "@/services/auth/sessionStorage";
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const PUBLIC_API_PATHS = [
-  "/api/v1/auth/login",
+  API_ROUTES.AUTH_LOGIN,
   "/api/v1/health",
 ];
 
