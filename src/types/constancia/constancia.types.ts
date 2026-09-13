@@ -44,6 +44,7 @@ export type SemesterCertificateRequest = {
   teacher_code: string;
   semester: string;
   expected_courses: ExpectedCourseRequest[];
+  confirmIncomplete?: boolean;
 };
 
 export type CourseCertificateResponse = {
@@ -99,3 +100,38 @@ export type CertificateGenerationSummary = {
 export type CertificateGenerationDetail = CertificateGenerationSummary;
 
 export type CertificateHistoryItem = CertificateGenerationSummary;
+
+export type CertificateApiResponse = {
+  id: number;
+  certificateKey: string;
+  certificateType: CertificationType;
+  status: EstadoConstancia;
+  version: number;
+  teacherId: number;
+  teacherCode: string;
+  teacherFullName: string;
+  academicPeriodId: number;
+  semester: string;
+  academicWorkloadId: number | null;
+  course: { id: number; code: string; name: string } | null;
+  section: number | null;
+  cycle: number | null;
+  school: string | null;
+  plan: number | null;
+  generatedAt: string | null;
+  signedAt: string | null;
+  pdfAvailable: boolean;
+  documentUrl: string;
+};
+
+export type CreateCertificateApiRequest =
+  | {
+      certificateType: "COURSE";
+      academicWorkloadId: number;
+    }
+  | {
+      certificateType: "SEMESTER";
+      teacherCode: string;
+      semester: string;
+      confirmIncomplete?: boolean;
+    };

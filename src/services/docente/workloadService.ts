@@ -2,8 +2,9 @@ import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
 import { API_ROUTES } from "@/config/apiRoutes";
 import type { PaginatedApiEnvelope } from "@/types/api.types";
 import type { AcademicWorkload } from "@/types/docente/workload.types";
-import type { CertificateGenerationSummary } from "@/types/constancia/constancia.types";
+import type { CertificateApiResponse, CertificateGenerationSummary } from "@/types/constancia/constancia.types";
 import { isCertificateStatus } from "@/types/constancia/constancia.types";
+import { mapCertificateToSummary } from "@/services/constancia/constanciaService";
 
 export function getAcademicWorkload(teacherCode: string, signal?: AbortSignal): Promise<AcademicWorkload[]> {
   void teacherCode;
@@ -29,13 +30,13 @@ export function getAcademicWorkload(teacherCode: string, signal?: AbortSignal): 
   });
 }
 export function generateWorkloadCertificate(academicWorkloadId: number): Promise<CertificateGenerationSummary> {
-  return httpJson(API_ROUTES.LEGACY_CERTIFICATE_COURSE, {
-    method: "POST", body: { academicWorkloadId }, timeoutMs: 30_000,
+  return httpJson(API_ROUTES.CERTIFICATES, {
+    method: "POST", body: { certificateType: "COURSE", academicWorkloadId }, timeoutMs: 30_000,
     validate: (value) => {
-      if (!isRecord(value) || typeof value.generationId !== "string" || !isCertificateStatus(value.status)) {
+      if (!isRecord(value) || value.success !== true || !isCertificateApiResponse(value.data)) {
         throw new ApiError("La respuesta de generacion no es valida", 0);
       }
-      return value as CertificateGenerationSummary;
+      return mapCertificateToSummary(value.data);
     },
   });
 }
@@ -66,4 +67,29 @@ function isTeacherCoursesEnvelope(value: unknown): value is PaginatedApiEnvelope
       && typeof w.academicPeriod.semesterCode === "string"
       && typeof w.academicPeriod.startDate === "string"
       && typeof w.academicPeriod.endDate === "string");
+}
+
+function isCertificateApiResponse(value: unknown): value is CertificateApiResponse {
+  return isRecord(value)
+    && Number.isSafeInteger(value.id)
+    && typeof value.certificateKey === "string"
+    && (value.certificateType === "COURSE" || value.certificateType === "SEMESTER")
+    && isCertificateStatus(value.status)
+    && Number.isSafeInteger(value.version)
+    && Number.isSafeInteger(value.teacherId)
+    && typeof value.teacherCode === "string"
+    && typeof value.teacherFullName === "string"
+    && Number.isSafeInteger(value.academicPeriodId)
+    && typeof value.semester === "string"
+    && (value.academicWorkloadId === null || Number.isSafeInteger(value.academicWorkloadId))
+    && (value.course === null || (isRecord(value.course) && Number.isSafeInteger(value.course.id)
+      && typeof value.course.code === "string" && typeof value.course.name === "string"))
+    && (value.section === null || Number.isSafeInteger(value.section))
+    && (value.cycle === null || Number.isSafeInteger(value.cycle))
+    && (value.school === null || typeof value.school === "string")
+    && (value.plan === null || Number.isSafeInteger(value.plan))
+    && (value.generatedAt === null || typeof value.generatedAt === "string")
+    && (value.signedAt === null || typeof value.signedAt === "string")
+    && typeof value.pdfAvailable === "boolean"
+    && typeof value.documentUrl === "string";
 }

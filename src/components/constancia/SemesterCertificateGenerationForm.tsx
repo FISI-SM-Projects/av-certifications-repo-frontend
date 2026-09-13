@@ -66,6 +66,7 @@ export function SemesterCertificateGenerationForm({
       teacher_code: teacherCode,
       semester: activeSemester,
       expected_courses: [],
+      confirmIncomplete: requiresIncompleteConfirmation,
     };
 
     setIsSubmitting(true);

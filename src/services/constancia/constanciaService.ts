@@ -2,10 +2,13 @@ import { isCertificateStatus } from "@/types/constancia/constancia.types";
 import { API_BASE_URL } from "@/lib/api";
 import { API_ROUTES } from "@/config/apiRoutes";
 import { ApiError, httpBlob, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
+import type { PaginatedApiEnvelope } from "@/types/api.types";
 import type {
+  CertificateApiResponse,
   CertificateGenerationDetail,
   CertificateGenerationSummary,
   CertificateHistoryItem,
+  CreateCertificateApiRequest,
   CourseCertificateRequest,
   CourseCertificateResponse,
   SemesterCertificateRequest,
@@ -32,10 +35,17 @@ export async function generarConstanciaCurso(
 export async function generarConstanciaSemestral(
   request: SemesterCertificateRequest,
 ): Promise<SemesterCertificateResponse> {
-  return requestConstancia<SemesterCertificateResponse>(API_ROUTES.LEGACY_CERTIFICATE_SEMESTER, {
+  const body: CreateCertificateApiRequest = {
+    certificateType: "SEMESTER",
+    teacherCode: request.teacher_code,
+    semester: request.semester,
+    confirmIncomplete: request.confirmIncomplete,
+  };
+
+  return requestConstancia<SemesterCertificateResponse>(API_ROUTES.CERTIFICATES, {
     method: "POST",
-    body: request,
-    validate: validateSemesterCertificateResponse,
+    body,
+    validate: (payload) => mapCertificateToSemesterResponse(validateCertificateEnvelope(payload)),
   });
 }
 
@@ -44,12 +54,9 @@ export async function listarConstanciasDocente(
 ): Promise<CertificateGenerationSummary[]> {
   const codigoDocente = requireNonBlank(teacherCode, "El codigo docente es obligatorio");
 
-  return requestConstancia<CertificateGenerationSummary[]>(
-    API_ROUTES.legacyTeacherCertificates(codigoDocente),
-    {
-      validate: validateCertificateGenerationList,
-    },
-  );
+  return requestConstancia<CertificateGenerationSummary[]>(certificateListPath(codigoDocente), {
+    validate: (payload) => validateCertificatePage(payload).map(mapCertificateToSummary),
+  });
 }
 
 export async function obtenerConstanciaPorGeneracion(
@@ -60,12 +67,9 @@ export async function obtenerConstanciaPorGeneracion(
     "El identificador de generacion es obligatorio",
   );
 
-  return requestConstancia<CertificateGenerationDetail>(
-    API_ROUTES.legacyCertificateDetail(idGeneracion),
-    {
-      validate: validateCertificateGenerationSummary,
-    },
-  );
+  return requestConstancia<CertificateGenerationDetail>(API_ROUTES.certificateById(idGeneracion), {
+    validate: (payload) => mapCertificateToSummary(validateCertificateEnvelope(payload)),
+  });
 }
 
 export async function obtenerHistorialConstancia(
@@ -76,12 +80,18 @@ export async function obtenerHistorialConstancia(
     "La clave de constancia es obligatoria",
   );
 
-  return requestConstancia<CertificateHistoryItem[]>(
-    API_ROUTES.legacyCertificateHistory(claveConstancia),
-    {
-      validate: validateCertificateGenerationList,
-    },
-  );
+  if (!/^\d+$/.test(claveConstancia)) {
+    return requestConstancia<CertificateHistoryItem[]>(
+      API_ROUTES.legacyCertificateHistory(claveConstancia),
+      {
+        validate: validateCertificateGenerationList,
+      },
+    );
+  }
+
+  return requestConstancia<CertificateHistoryItem[]>(API_ROUTES.certificateVersions(claveConstancia), {
+    validate: (payload) => validateCertificatePage(payload).map(mapCertificateToSummary),
+  });
 }
 
 export function construirUrlVisualizacionPdf(generationId: string): string {
@@ -90,7 +100,7 @@ export function construirUrlVisualizacionPdf(generationId: string): string {
     "El identificador de generacion es obligatorio",
   );
 
-  return `${API_BASE_URL}${API_ROUTES.legacyCertificatePdf(idGeneracion)}`;
+  return `${API_BASE_URL}${API_ROUTES.certificateDocument(idGeneracion, "inline")}`;
 }
 
 export function construirUrlDescargaPdf(generationId: string): string {
@@ -99,7 +109,7 @@ export function construirUrlDescargaPdf(generationId: string): string {
     "El identificador de generacion es obligatorio",
   );
 
-  return `${API_BASE_URL}${API_ROUTES.legacyCertificateDownload(idGeneracion)}`;
+  return `${API_BASE_URL}${API_ROUTES.certificateDocument(idGeneracion, "attachment")}`;
 }
 
 export async function obtenerPdfConstancia(generationId: string): Promise<Blob> {
@@ -109,7 +119,7 @@ export async function obtenerPdfConstancia(generationId: string): Promise<Blob> 
   );
 
   return requestConstanciaBlob(
-    API_ROUTES.legacyCertificatePdf(idGeneracion),
+    API_ROUTES.certificateDocument(idGeneracion, "inline"),
   );
 }
 
@@ -120,8 +130,29 @@ export async function descargarPdfConstancia(generationId: string): Promise<Blob
   );
 
   return requestConstanciaBlob(
-    API_ROUTES.legacyCertificateDownload(idGeneracion),
+    API_ROUTES.certificateDocument(idGeneracion, "attachment"),
   );
+}
+
+export function mapCertificateToSummary(certificate: CertificateApiResponse): CertificateGenerationSummary {
+  const documentUrl = API_ROUTES.certificateDocument(String(certificate.id), "inline");
+  return {
+    generationId: String(certificate.id),
+    certificateKey: certificate.certificateKey,
+    version: certificate.version,
+    type: certificate.certificateType === "SEMESTER" ? "SEMESTRAL" : "CURSO",
+    certificateType: certificate.certificateType,
+    status: certificate.status,
+    teacherCode: certificate.teacherCode,
+    courseCode: certificate.course?.code ?? null,
+    courseSubject: certificate.course?.name,
+    section: certificate.section === null ? null : String(certificate.section),
+    semester: certificate.semester,
+    generatedAt: certificate.generatedAt,
+    viewUrl: documentUrl,
+    downloadUrl: API_ROUTES.certificateDocument(String(certificate.id), "attachment"),
+    pdfAvailable: certificate.pdfAvailable,
+  };
 }
 
 async function requestConstancia<T>(
@@ -192,19 +223,85 @@ function validateCourseCertificateResponse(payload: unknown): CourseCertificateR
   return payload as CourseCertificateResponse;
 }
 
-function validateSemesterCertificateResponse(payload: unknown): SemesterCertificateResponse {
-  if (!isRecord(payload) || !hasCommonCertificateFields(payload) || payload.type !== "SEMESTRAL") {
+function mapCertificateToSemesterResponse(certificate: CertificateApiResponse): SemesterCertificateResponse {
+  const summary = mapCertificateToSummary(certificate);
+  if (summary.certificateType !== "SEMESTER") {
     throw new ApiError("La respuesta de generacion semestral no es valida.", 0);
   }
+  return {
+    generationId: summary.generationId,
+    certificateKey: summary.certificateKey,
+    version: summary.version,
+    type: "SEMESTRAL",
+    certificateType: "SEMESTER",
+    status: summary.status,
+    teacherCode: summary.teacherCode,
+    teacherFullName: certificate.teacherFullName,
+    semester: summary.semester,
+    generatedAt: summary.generatedAt ?? "",
+    viewUrl: summary.viewUrl,
+    downloadUrl: summary.downloadUrl,
+  };
+}
 
+function validateCertificateEnvelope(payload: unknown): CertificateApiResponse {
+  if (!isRecord(payload) || payload.success !== true || !isCertificateApiResponse(payload.data)) {
+    throw new ApiError("La constancia no tiene el formato esperado.", 0);
+  }
+
+  return payload.data;
+}
+
+function validateCertificatePage(payload: unknown): CertificateApiResponse[] {
   if (
-    typeof payload.teacherCode !== "string" ||
-    typeof payload.teacherFullName !== "string"
+    !isRecord(payload) ||
+    payload.success !== true ||
+    !Array.isArray(payload.data) ||
+    !payload.data.every(isCertificateApiResponse)
   ) {
-    throw new ApiError("La respuesta de generacion semestral no es valida.", 0);
+    throw new ApiError("La lista de constancias no tiene el formato esperado.", 0);
   }
 
-  return payload as SemesterCertificateResponse;
+  return (payload as PaginatedApiEnvelope<CertificateApiResponse[]>).data;
+}
+
+function isCertificateApiResponse(value: unknown): value is CertificateApiResponse {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    Number.isSafeInteger(value.id) &&
+    typeof value.certificateKey === "string" &&
+    (value.certificateType === "COURSE" || value.certificateType === "SEMESTER") &&
+    isCertificateStatus(value.status) &&
+    Number.isSafeInteger(value.version) &&
+    Number.isSafeInteger(value.teacherId) &&
+    typeof value.teacherCode === "string" &&
+    typeof value.teacherFullName === "string" &&
+    Number.isSafeInteger(value.academicPeriodId) &&
+    typeof value.semester === "string" &&
+    (value.academicWorkloadId === null || Number.isSafeInteger(value.academicWorkloadId)) &&
+    (value.course === null || (isRecord(value.course) && Number.isSafeInteger(value.course.id)
+      && typeof value.course.code === "string" && typeof value.course.name === "string")) &&
+    (value.section === null || Number.isSafeInteger(value.section)) &&
+    (value.cycle === null || Number.isSafeInteger(value.cycle)) &&
+    (value.school === null || typeof value.school === "string") &&
+    (value.plan === null || Number.isSafeInteger(value.plan)) &&
+    (value.generatedAt === null || typeof value.generatedAt === "string") &&
+    (value.signedAt === null || typeof value.signedAt === "string") &&
+    typeof value.pdfAvailable === "boolean" &&
+    typeof value.documentUrl === "string"
+  );
+}
+
+function certificateListPath(teacherCode: string): string {
+  const params = new URLSearchParams({
+    teacherCode,
+    page: "0",
+    size: "50",
+  });
+  return `${API_ROUTES.CERTIFICATES}?${params.toString()}`;
 }
 
 function validateCertificateGenerationList(payload: unknown): CertificateGenerationSummary[] {
@@ -213,14 +310,6 @@ function validateCertificateGenerationList(payload: unknown): CertificateGenerat
   }
 
   return payload as CertificateGenerationSummary[];
-}
-
-function validateCertificateGenerationSummary(payload: unknown): CertificateGenerationSummary {
-  if (!validateCertificateGenerationSummaryShape(payload)) {
-    throw new ApiError("La constancia no tiene el formato esperado.", 0);
-  }
-
-  return payload as CertificateGenerationSummary;
 }
 
 function validateCertificateGenerationSummaryShape(value: unknown): boolean {
