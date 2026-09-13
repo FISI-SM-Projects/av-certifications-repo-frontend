@@ -27,3 +27,5 @@ When the backend reports a partial semester consolidation with HTTP 409, the UI 
 Frontend services must not call versioned, Spanish, demo, temporary, or legacy public paths.
 
 Examples of disallowed backend API paths: `/api/v1/**`, `/docentes/**`, `/constancias/**`, `/director/**`, `/demo/**`, `/legacy/**`, and `/temp/**`.
+
+Internal Spanish view-model names and Spanish UI routes are tracked in `docs/internal-naming-roadmap.md`; they are not backend API paths.
