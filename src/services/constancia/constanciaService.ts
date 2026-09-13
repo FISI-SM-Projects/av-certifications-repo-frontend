@@ -47,6 +47,29 @@ export async function listarConstanciasDocente(
   });
 }
 
+export async function listarConstancias(
+  filters: CertificateListFilters = {},
+): Promise<CertificateGenerationSummary[]> {
+  return requestConstancia<CertificateGenerationSummary[]>(certificateListFiltersPath(filters), {
+    validate: (payload) => validateCertificatePage(payload).map(mapCertificateToSummary),
+  });
+}
+
+export async function firmarConstancia(generationId: string): Promise<CertificateGenerationSummary> {
+  const idGeneracion = requireNonBlank(
+    generationId,
+    "El identificador de generacion es obligatorio",
+  );
+
+  return requestConstancia<CertificateGenerationSummary>(
+    API_ROUTES.certificateSignature(idGeneracion),
+    {
+      method: "POST",
+      validate: (payload) => mapCertificateToSummary(validateCertificateEnvelope(payload)),
+    },
+  );
+}
+
 export async function obtenerConstanciaPorGeneracion(
   generationId: string,
 ): Promise<CertificateGenerationDetail> {
@@ -270,6 +293,31 @@ function certificateListPath(teacherCode: string): string {
   return `${API_ROUTES.CERTIFICATES}?${params.toString()}`;
 }
 
+function certificateListFiltersPath(filters: CertificateListFilters): string {
+  const params = new URLSearchParams({
+    page: String(filters.page ?? 0),
+    size: String(filters.size ?? 50),
+  });
+
+  if (filters.teacherCode !== undefined && filters.teacherCode.trim() !== "") {
+    params.set("teacherCode", filters.teacherCode.trim());
+  }
+  if (filters.certificateType !== undefined) {
+    params.set("certificateType", filters.certificateType);
+  }
+  if (filters.status !== undefined) {
+    params.set("status", filters.status);
+  }
+  if (filters.semester !== undefined && filters.semester.trim() !== "") {
+    params.set("semester", filters.semester.trim());
+  }
+  if (filters.course !== undefined && filters.course.trim() !== "") {
+    params.set("course", filters.course.trim());
+  }
+
+  return `${API_ROUTES.CERTIFICATES}?${params.toString()}`;
+}
+
 function isMissingCourse(value: unknown): value is MissingCourse {
   if (!isRecord(value)) {
     return false;
@@ -277,6 +325,16 @@ function isMissingCourse(value: unknown): value is MissingCourse {
 
   return typeof value.code === "string" && typeof value.section === "string";
 }
+
+export type CertificateListFilters = {
+  teacherCode?: string;
+  certificateType?: "COURSE" | "SEMESTER";
+  status?: "GENERADA" | "FIRMADA";
+  semester?: string;
+  course?: string;
+  page?: number;
+  size?: number;
+};
 
 function requireNonBlank(value: string, message: string): string {
   const normalizedValue = value.trim();

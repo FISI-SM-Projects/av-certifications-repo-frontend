@@ -5,7 +5,7 @@ import { obtenerTokenSesion, eliminarSesion } from "@/services/auth/sessionStora
 const DEFAULT_TIMEOUT_MS = 10_000;
 const PUBLIC_API_PATHS = [
   API_ROUTES.AUTH_LOGIN,
-  "/api/v1/health",
+  API_ROUTES.HEALTH,
 ];
 
 export type ApiErrorOptions = {

@@ -4,12 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/context/auth/AuthProvider";
+import { listarConstancias } from "@/services/constancia/constanciaService";
 import { obtenerDocentesPorDepartamento } from "@/services/director/directorService";
 
-function obtenerDepartamentoConsulta(
-  role: string | undefined,
-  departamentoAcademico: string | null | undefined,
-): string | null {
+function obtenerDepartamentoConsulta(departamentoAcademico: string | null | undefined): string | null {
   if (departamentoAcademico !== null && departamentoAcademico !== undefined) {
     return departamentoAcademico;
   }
@@ -20,9 +18,10 @@ function obtenerDepartamentoConsulta(
 export function DirectorDashboard() {
   const { user } = useAuth();
   const [cantidadDocentes, setCantidadDocentes] = useState<number | null>(null);
+  const [cantidadPendientes, setCantidadPendientes] = useState<number | null>(null);
+  const [cantidadFirmadas, setCantidadFirmadas] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const departamentoConsulta = obtenerDepartamentoConsulta(
-    user?.role,
     user?.departamentoAcademico,
   );
 
@@ -32,15 +31,23 @@ export function DirectorDashboard() {
     async function cargarResumen() {
       if (departamentoConsulta === null) {
         setCantidadDocentes(null);
+        setCantidadPendientes(null);
+        setCantidadFirmadas(null);
         return;
       }
 
       try {
         setError(null);
-        const docentes = await obtenerDocentesPorDepartamento(departamentoConsulta);
+        const [docentes, pendientes, firmadas] = await Promise.all([
+          obtenerDocentesPorDepartamento(departamentoConsulta),
+          listarConstancias({ status: "GENERADA", size: 50 }),
+          listarConstancias({ status: "FIRMADA", size: 50 }),
+        ]);
 
         if (isMounted) {
           setCantidadDocentes(docentes.length);
+          setCantidadPendientes(pendientes.length);
+          setCantidadFirmadas(firmadas.length);
         }
       } catch (requestError) {
         if (isMounted) {
@@ -102,13 +109,17 @@ export function DirectorDashboard() {
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
             Constancias pendientes
           </p>
-          <p className="mt-3 text-sm font-semibold text-[var(--muted)]">Próximo sprint</p>
+          <p className="mt-3 text-3xl font-semibold text-[var(--text)]">
+            {cantidadPendientes ?? "..."}
+          </p>
         </article>
         <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
             Constancias firmadas
           </p>
-          <p className="mt-3 text-sm font-semibold text-[var(--muted)]">Próximo sprint</p>
+          <p className="mt-3 text-3xl font-semibold text-[var(--text)]">
+            {cantidadFirmadas ?? "..."}
+          </p>
         </article>
       </section>
 
@@ -123,13 +134,12 @@ export function DirectorDashboard() {
           >
             Ver docentes
           </Link>
-          <button
-            type="button"
-            disabled
-            className="cursor-not-allowed rounded-md border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--muted)] opacity-60"
+          <Link
+            href="/director/constancias"
+            className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-medium text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
           >
-            Constancias - Próximo sprint
-          </button>
+            Revisar constancias
+          </Link>
         </div>
       </section>
     </div>
