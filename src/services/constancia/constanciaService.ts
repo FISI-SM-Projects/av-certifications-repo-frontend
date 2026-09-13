@@ -9,8 +9,6 @@ import type {
   CertificateGenerationSummary,
   CertificateHistoryItem,
   CreateCertificateApiRequest,
-  CourseCertificateRequest,
-  CourseCertificateResponse,
   SemesterCertificateRequest,
   SemesterCertificateResponse,
 } from "@/types/constancia/constancia.types";
@@ -21,16 +19,6 @@ import {
 
 const ERROR_CONEXION = "No se pudo conectar con el backend de constancias";
 const ERROR_SOLICITUD = "No se pudo completar la solicitud de constancias";
-
-export async function generarConstanciaCurso(
-  request: CourseCertificateRequest,
-): Promise<CourseCertificateResponse> {
-  return requestConstancia<CourseCertificateResponse>(API_ROUTES.LEGACY_CERTIFICATE_COURSE, {
-    method: "POST",
-    body: request,
-    validate: validateCourseCertificateResponse,
-  });
-}
 
 export async function generarConstanciaSemestral(
   request: SemesterCertificateRequest,
@@ -81,12 +69,7 @@ export async function obtenerHistorialConstancia(
   );
 
   if (!/^\d+$/.test(claveConstancia)) {
-    return requestConstancia<CertificateHistoryItem[]>(
-      API_ROUTES.legacyCertificateHistory(claveConstancia),
-      {
-        validate: validateCertificateGenerationList,
-      },
-    );
+    throw new ConstanciaApiError("El historial oficial requiere el identificador numerico de la constancia.", 0);
   }
 
   return requestConstancia<CertificateHistoryItem[]>(API_ROUTES.certificateVersions(claveConstancia), {
@@ -206,23 +189,6 @@ function toConstanciaApiError(error: ApiError): ConstanciaApiError {
   );
 }
 
-function validateCourseCertificateResponse(payload: unknown): CourseCertificateResponse {
-  if (!isRecord(payload) || !hasCommonCertificateFields(payload)) {
-    throw new ApiError("La respuesta de generacion por curso no es valida.", 0);
-  }
-
-  if (
-    typeof payload.teacherFullName !== "string" ||
-    typeof payload.courseCode !== "string" ||
-    typeof payload.courseSubject !== "string" ||
-    typeof payload.section !== "string"
-  ) {
-    throw new ApiError("La respuesta de generacion por curso no es valida.", 0);
-  }
-
-  return payload as CourseCertificateResponse;
-}
-
 function mapCertificateToSemesterResponse(certificate: CertificateApiResponse): SemesterCertificateResponse {
   const summary = mapCertificateToSummary(certificate);
   if (summary.certificateType !== "SEMESTER") {
@@ -302,41 +268,6 @@ function certificateListPath(teacherCode: string): string {
     size: "50",
   });
   return `${API_ROUTES.CERTIFICATES}?${params.toString()}`;
-}
-
-function validateCertificateGenerationList(payload: unknown): CertificateGenerationSummary[] {
-  if (!Array.isArray(payload) || !payload.every(validateCertificateGenerationSummaryShape)) {
-    throw new ApiError("La lista de constancias no tiene el formato esperado.", 0);
-  }
-
-  return payload as CertificateGenerationSummary[];
-}
-
-function validateCertificateGenerationSummaryShape(value: unknown): boolean {
-  if (!isRecord(value) || !hasCommonCertificateFields(value)) {
-    return false;
-  }
-
-  return (
-    typeof value.teacherCode === "string" &&
-    (typeof value.courseCode === "string" || value.courseCode === null) &&
-    (typeof value.section === "string" || value.section === null)
-  );
-}
-
-function hasCommonCertificateFields(value: Record<string, unknown>): boolean {
-  return (
-    typeof value.generationId === "string" &&
-    typeof value.certificateKey === "string" &&
-    typeof value.version === "number" &&
-    (value.type === "CURSO" || value.type === "SEMESTRAL") &&
-    (value.certificateType === undefined || value.certificateType === "COURSE" || value.certificateType === "SEMESTER") &&
-    isCertificateStatus(value.status) &&
-    typeof value.semester === "string" &&
-    (typeof value.generatedAt === "string" || value.generatedAt === null) &&
-    typeof value.viewUrl === "string" &&
-    typeof value.downloadUrl === "string"
-  );
 }
 
 function isMissingCourse(value: unknown): value is MissingCourse {

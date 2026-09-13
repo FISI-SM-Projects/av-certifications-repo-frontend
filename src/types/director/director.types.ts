@@ -1,4 +1,5 @@
 export type DirectorDocenteListado = {
+  id: number;
   teacherCode: string;
   nombres: string;
   apellidos: string;
@@ -6,4 +7,5 @@ export type DirectorDocenteListado = {
   departamentoAcademico: string;
   categoria: string;
   condicion: string;
+  estado?: string;
 };

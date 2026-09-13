@@ -7,6 +7,7 @@ The frontend consumes the versioned backend API under `/api/v1`.
 New services should use route constants from `src/config/apiRoutes.ts`.
 
 - `POST /api/v1/auth/login`
+- `GET /api/v1/teachers`
 - `GET /api/v1/teachers/me`
 - `GET /api/v1/teachers/me/courses`
 - `GET /api/v1/certificates`
@@ -23,10 +24,8 @@ When the backend reports a partial semester consolidation with HTTP 409, the UI 
 
 ## Legacy routes
 
-Temporary legacy routes remain only for screens that have not been standardized yet:
+Temporary legacy routes remain available in the backend for compatibility, but current frontend MVP flows should not consume them:
 
-- `/api/v1/constancias/**`
-- `/api/v1/director/**`
 - `/api/v1/auth/me` for session role context
 
-New frontend services should not introduce new calls to Spanish public paths unless they are explicitly marked legacy in `src/config/apiRoutes.ts`.
+New frontend services should not introduce calls to Spanish public paths such as `/api/v1/constancias/**`, `/api/v1/director/**`, or `/api/v1/docentes/**`.
