@@ -8,10 +8,10 @@ import { useRouter } from "next/navigation";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { isDemoMode } from "@/lib/uiMode";
-import type { RolUsuario } from "@/types/auth/auth.types";
+import type { Role, RolUsuario } from "@/types/auth/auth.types";
 
 type RequireRoleProps = {
-  allowedRoles: RolUsuario[];
+  allowedRoles: Array<Role | RolUsuario>;
   children: ReactNode;
 };
 
@@ -56,7 +56,7 @@ function UnauthorizedState() {
 
 export function RequireRole({ allowedRoles, children }: RequireRoleProps) {
   const router = useRouter();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, roles, isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -68,11 +68,12 @@ export function RequireRole({ allowedRoles, children }: RequireRoleProps) {
     return <LoadingState />;
   }
 
-  if (!isAuthenticated || user === null) {
+  if (!isAuthenticated) {
     return <LoadingState />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  const activeRoles: Array<Role | RolUsuario> = user === null ? roles : [user.role];
+  if (!activeRoles.some((role) => allowedRoles.includes(role))) {
     return <UnauthorizedState />;
   }
 
