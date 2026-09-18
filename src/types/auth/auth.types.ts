@@ -35,7 +35,7 @@ export type LoginResponse = {
 
 export type Role = "ADMIN" | "DOCENTE" | "DIRECTOR_ESCUELA";
 
-// Identity and roles depend on the future /auth/me response.
+// Teacher identity comes from /teachers/me; roles come from the JWT.
 export type AuthenticatedSession = {
   token: string;
   tokenType: LoginData["type"];
