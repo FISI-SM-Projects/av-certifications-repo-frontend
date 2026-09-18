@@ -27,6 +27,7 @@ function LoadingState() {
 
 function UnauthorizedState() {
   const isDemo = isDemoMode();
+  const { token } = useAuth();
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4 text-[var(--text)]">
@@ -42,10 +43,10 @@ function UnauthorizedState() {
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/login-demo"
+            href={token !== null ? "/login" : "/login-demo"}
             className="rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
           >
-            {isDemo ? "Volver al login demo" : "Volver al acceso"}
+            {token === null && isDemo ? "Volver al login demo" : "Volver al acceso"}
           </Link>
           <LogoutButton />
         </div>
@@ -60,7 +61,7 @@ export function RequireRole({ allowedRoles, children }: RequireRoleProps) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace("/login-demo");
+      router.replace("/login");
     }
   }, [isLoading, isAuthenticated, router]);
 
