@@ -1,5 +1,6 @@
 import { API_ROUTES } from "@/config/apiRoutes";
 import { ApiError, httpJson, isRecord } from "@/lib/api/httpClient";
+import type { TeacherProfileResponse } from "@/types/docente/teacherProfile.types";
 import type {
   DemoLoginRequest,
   DemoLoginResponse,
@@ -16,6 +17,12 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
     method: "POST",
     body: credentials,
     validate: validateLoginResponse,
+  });
+}
+
+export async function getAuthenticatedTeacher(): Promise<TeacherProfileResponse> {
+  return httpJson<TeacherProfileResponse>(API_ROUTES.teachers.me, {
+    validate: validateTeacherProfileResponse,
   });
 }
 
@@ -53,6 +60,41 @@ function validateLoginResponse(payload: unknown): LoginResponse {
     message: payload.message,
     data: { type: "Bearer", token: payload.data.token },
   };
+}
+
+function validateTeacherProfileResponse(payload: unknown): TeacherProfileResponse {
+  if (
+    !isRecord(payload) ||
+    payload.success !== true ||
+    typeof payload.message !== "string" ||
+    !isRecord(payload.data)
+  ) {
+    throw new ApiError("La respuesta del perfil docente no tiene el formato esperado.", 0);
+  }
+
+  const teacher = payload.data;
+  if (
+    typeof teacher.id !== "number" ||
+    typeof teacher.personId !== "number" ||
+    (teacher.moodleId !== null && typeof teacher.moodleId !== "number") ||
+    typeof teacher.code !== "string" ||
+    (teacher.dni !== null && typeof teacher.dni !== "string") ||
+    typeof teacher.firstName !== "string" ||
+    typeof teacher.paternalLastName !== "string" ||
+    (teacher.maternalLastName !== null && typeof teacher.maternalLastName !== "string") ||
+    (teacher.department !== null &&
+      teacher.department !== "CC" &&
+      teacher.department !== "SW" &&
+      teacher.department !== "EG" &&
+      teacher.department !== "NA") ||
+    (teacher.registerState !== "ACTIVO" &&
+      teacher.registerState !== "SUSPENDIDO" &&
+      teacher.registerState !== "ELIMINADO")
+  ) {
+    throw new ApiError("La respuesta del perfil docente no tiene el formato esperado.", 0);
+  }
+
+  return payload as TeacherProfileResponse;
 }
 
 function validateUsuariosDemo(payload: unknown): UsuarioSesion[] {
