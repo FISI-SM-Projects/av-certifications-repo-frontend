@@ -12,7 +12,10 @@ export type AppHeaderProps = {
 };
 
 export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeaderProps) {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, teacher, isLoading, isAuthenticated } = useAuth();
+  const teacherName = teacher === null
+    ? null
+    : [teacher.firstName, teacher.paternalLastName, teacher.maternalLastName].filter(Boolean).join(" ");
   const isDemo = isDemoMode();
   const visibleBreadcrumb =
     isDemo || breadcrumb?.includes("Sprint") !== true ? breadcrumb : undefined;
@@ -50,9 +53,11 @@ export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeade
             ? "Cargando sesión"
             : isAuthenticated && user !== null
               ? `${user.fullName} · ${user.role}`
-              : "Sin sesión"}
+              : isAuthenticated && teacherName !== null
+                ? `${teacherName} · DOCENTE`
+                : "Sin sesión"}
         </span>
-        {isAuthenticated ? (
+        {user !== null ? (
           <DemoOnly>
             <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
               Sesión simulada

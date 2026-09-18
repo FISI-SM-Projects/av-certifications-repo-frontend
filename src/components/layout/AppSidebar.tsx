@@ -48,9 +48,16 @@ function isActivePath(pathname: string, href: string): boolean {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, teacher, roles, isLoading, isAuthenticated } = useAuth();
   const isDemo = isDemoMode();
-  const menuItems = user !== null ? MENU_BY_ROLE[user.role] : [];
+  const menuItems = user !== null
+    ? MENU_BY_ROLE[user.role]
+    : teacher !== null && roles.includes("DOCENTE")
+      ? MENU_BY_ROLE.DOCENTE
+      : [];
+  const teacherName = teacher === null
+    ? null
+    : [teacher.firstName, teacher.paternalLastName, teacher.maternalLastName].filter(Boolean).join(" ");
 
   return (
     <aside className="flex min-h-screen w-full flex-col border-r border-[var(--border)] bg-[rgba(27,5,12,0.96)] text-sm text-[var(--text)] md:sticky md:top-0 md:w-64">
@@ -88,6 +95,14 @@ export function AppSidebar() {
                     Sesion simulada
                   </p>
                 </DemoOnly>
+              </>
+            ) : isAuthenticated && teacher !== null ? (
+              <>
+                <p className="font-semibold">{teacherName}</p>
+                <p className="mt-1 text-xs text-[var(--gold-soft)]">DOCENTE</p>
+                {teacher.department !== null ? (
+                  <p className="mt-1 text-xs text-[var(--muted)]">{teacher.department}</p>
+                ) : null}
               </>
             ) : (
               <>

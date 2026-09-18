@@ -10,11 +10,12 @@ type LogoutButtonProps = {
 
 export function LogoutButton({ className }: LogoutButtonProps) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, token } = useAuth();
 
   function handleLogout() {
+    const loginPath = token !== null ? "/login" : "/login-demo";
     logout();
-    router.push("/login-demo");
+    router.push(loginPath);
   }
 
   return (
