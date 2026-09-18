@@ -14,8 +14,8 @@ import {
 import type { PerfilDocenteResponse } from "@/types/docente/perfilDocente.types";
 
 export function TeacherProfileView() {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const teacherCode = user?.teacherCode?.trim() ?? "";
+  const { user, teacher, isLoading: isAuthLoading } = useAuth();
+  const teacherCode = teacher === null ? user?.teacherCode?.trim() ?? "" : "";
   const [perfil, setPerfil] = useState<PerfilDocenteResponse | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -59,6 +59,15 @@ export function TeacherProfileView() {
 
   if (isAuthLoading) {
     return <PanelMessage message="Verificando sesion..." />;
+  }
+
+  if (teacher !== null) {
+    return (
+      <div className="space-y-5">
+        <PerfilDocenteHeader docente={teacher} />
+        <DatosDocenteCard docente={teacher} />
+      </div>
+    );
   }
 
   if (teacherCode === "") {

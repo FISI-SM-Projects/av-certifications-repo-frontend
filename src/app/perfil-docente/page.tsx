@@ -9,7 +9,6 @@ export default function PerfilDocentePage() {
         breadcrumb="Sprint 2 > Perfil Docente"
         title="Perfil Docente"
         subtitle="Sistema de Gestion Docente FISI"
-        badges={["Sesion simulada"]}
       >
         <TeacherProfileView />
       </AppShell>

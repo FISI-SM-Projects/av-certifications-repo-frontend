@@ -1,7 +1,8 @@
 import type { Docente } from "@/types/docente/perfilDocente.types";
+import type { TeacherProfile } from "@/types/docente/teacherProfile.types";
 
 type DatosDocenteCardProps = {
-  docente: Docente;
+  docente: Docente | TeacherProfile;
 };
 
 type Field = {
@@ -15,7 +16,25 @@ type FieldGroup = {
 };
 
 export function DatosDocenteCard({ docente }: DatosDocenteCardProps) {
-  const groups: FieldGroup[] = [
+  const groups: FieldGroup[] = "firstName" in docente ? [
+    {
+      title: "Identificacion",
+      fields: [
+        { label: "Codigo", value: docente.code },
+        { label: "Nombres", value: docente.firstName },
+        { label: "Apellido paterno", value: docente.paternalLastName },
+        ...(docente.maternalLastName !== null ? [{ label: "Apellido materno", value: docente.maternalLastName }] : []),
+        ...(docente.dni !== null ? [{ label: "DNI", value: docente.dni }] : []),
+      ],
+    },
+    {
+      title: "Vinculo institucional",
+      fields: [
+        { label: "Departamento academico", value: docente.department ?? "No registrado" },
+        { label: "Estado", value: docente.registerState },
+      ],
+    },
+  ] : [
     {
       title: "Identificacion",
       fields: [
