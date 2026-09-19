@@ -13,11 +13,13 @@ type MenuItem = {
   label: string;
   href: string;
   disabled?: boolean;
+  backendOnly?: boolean;
 };
 
 const MENU_BY_ROLE: Record<RolUsuario, MenuItem[]> = {
   DOCENTE: [
     { label: "Perfil Docente", href: "/perfil-docente" },
+    { label: "Carga académica", href: "/carga-academica", backendOnly: true },
     { label: "Constancias", href: "/constancias" },
   ],
   DIRECTOR: [
@@ -51,7 +53,7 @@ export function AppSidebar() {
   const { user, teacher, roles, isLoading, isAuthenticated } = useAuth();
   const isDemo = isDemoMode();
   const menuItems = user !== null
-    ? MENU_BY_ROLE[user.role]
+    ? MENU_BY_ROLE[user.role].filter((item) => !item.backendOnly)
     : teacher !== null && roles.includes("DOCENTE")
       ? MENU_BY_ROLE.DOCENTE
       : [];

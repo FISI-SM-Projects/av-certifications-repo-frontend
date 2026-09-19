@@ -4,5 +4,6 @@ export const API_ROUTES = {
   },
   teachers: {
     me: "/api/v1/teachers/me",
+    courses: "/api/v1/teachers/me/courses",
   },
 } as const;
