@@ -16,10 +16,6 @@ export function isDemoMode(): boolean {
   return getUiMode() === "demo";
 }
 
-export function isProductionMode(): boolean {
-  return getUiMode() === "production";
-}
-
 function isUiMode(value: string | undefined): value is UiMode {
   return UI_MODE_VALUES.includes(value as UiMode);
 }

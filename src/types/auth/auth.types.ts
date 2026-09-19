@@ -40,13 +40,3 @@ export type AuthenticatedSession = {
   token: string;
   tokenType: LoginData["type"];
 };
-
-export type ApiError = {
-  success: false;
-  statusCode: number;
-  error: string;
-  message: string;
-  path: string;
-  timestamp: string;
-  details: Array<{ field: string; message: string }>;
-};
