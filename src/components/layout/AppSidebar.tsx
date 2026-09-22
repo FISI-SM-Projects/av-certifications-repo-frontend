@@ -20,7 +20,7 @@ const MENU_BY_ROLE: Record<RolUsuario, MenuItem[]> = {
   DOCENTE: [
     { label: "Perfil Docente", href: "/perfil-docente" },
     { label: "Carga académica", href: "/carga-academica", backendOnly: true },
-    { label: "Constancias", href: "/constancias" },
+    { label: "Constancias", href: "/constancias", backendOnly: true },
   ],
   DIRECTOR: [
     { label: "Dashboard", href: "/director" },

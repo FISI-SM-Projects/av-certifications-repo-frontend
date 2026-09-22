@@ -2,8 +2,6 @@
 
 import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 
-import { DemoOnly } from "@/components/demo/DemoOnly";
-import { isDemoMode } from "@/lib/uiMode";
 import { generarConstanciaSemestral } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type {
@@ -19,9 +17,8 @@ type ExpectedCourseFormRow = {
   section: string;
 };
 
-type SemesterCertificateSimulationFormProps = {
+type SemesterCertificateFormProps = {
   certificates: CertificateGenerationSummary[];
-  teacherCode: string;
   onGenerated: () => Promise<void> | void;
 };
 
@@ -30,12 +27,10 @@ const INITIAL_ROWS: ExpectedCourseFormRow[] = [
   { id: "course-2", code: "32SW001", section: "2" },
 ];
 
-export function SemesterCertificateSimulationForm({
+export function SemesterCertificateForm({
   certificates,
-  teacherCode,
   onGenerated,
-}: SemesterCertificateSimulationFormProps) {
-  const isDemo = isDemoMode();
+}: SemesterCertificateFormProps) {
   const [semester, setSemester] = useState("26.1");
   const [rows, setRows] = useState<ExpectedCourseFormRow[]>(INITIAL_ROWS);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -45,21 +40,18 @@ export function SemesterCertificateSimulationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const rowStatuses = useMemo(
-    () => rows.map((row) => ({ rowId: row.id, found: isCourseAvailable(row, semester, teacherCode, certificates) })),
-    [certificates, rows, semester, teacherCode],
+    () => rows.map((row) => ({ rowId: row.id, found: isCourseAvailable(row, semester, certificates) })),
+    [certificates, rows, semester],
   );
   const hasMissingCourses = rowStatuses.some((status) => !status.found);
   const hasIncompleteRows = rows.some((row) => row.code.trim() === "" || row.section.trim() === "");
   const isSubmitDisabled =
     isSubmitting
-    || teacherCode.trim() === ""
     || semester.trim() === ""
     || rows.length === 0
     || hasIncompleteRows
     || hasMissingCourses;
-  const rowGridClass = isDemo
-    ? "md:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto_auto]"
-    : "md:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto]";
+  const rowGridClass = "md:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto_auto]";
 
   function updateRow(rowId: string, field: "code" | "section", value: string) {
     setRows((currentRows) =>
@@ -95,7 +87,7 @@ export function SemesterCertificateSimulationForm({
     setMissingCourses([]);
     setSuccessResponse(null);
 
-    const errors = validateForm(teacherCode, semester, rows);
+    const errors = validateForm(semester, rows);
     if (errors.length > 0) {
       setValidationErrors(errors);
       return;
@@ -110,7 +102,6 @@ export function SemesterCertificateSimulationForm({
     setIsSubmitting(true);
 
     const request: SemesterCertificateRequest = {
-      teacher_code: teacherCode,
       semester,
       expected_courses: rows.map((row) => ({
         code: row.code,
@@ -168,19 +159,7 @@ export function SemesterCertificateSimulationForm({
       </div>
 
       <form className="mt-5 space-y-5" onSubmit={handleSubmit}>
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[var(--text)]" htmlFor="semester-teacher-code">
-              Codigo docente
-            </label>
-            <input
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] read-only:cursor-not-allowed read-only:opacity-75"
-              id="semester-teacher-code"
-              readOnly
-              type="text"
-              value={teacherCode}
-            />
-          </div>
+        <div className="grid gap-4 md:max-w-md">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-[var(--text)]" htmlFor="semester-value">
               Semestre
@@ -199,21 +178,17 @@ export function SemesterCertificateSimulationForm({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h4 className="text-base font-semibold text-[var(--text)]">Cursos esperados</h4>
-              <DemoOnly>
-                <p className="mt-1 text-sm text-[var(--muted)]">
-                  El estado encontrado/faltante se calcula con el listado actual visible.
-                </p>
-              </DemoOnly>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                El estado encontrado/faltante se calcula con el listado actual visible.
+              </p>
             </div>
-            <DemoOnly>
-              <button
-                className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-                onClick={addRow}
-                type="button"
-              >
-                Agregar curso
-              </button>
-            </DemoOnly>
+            <button
+              className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+              onClick={addRow}
+              type="button"
+            >
+              Agregar curso
+            </button>
           </div>
 
           <div className="space-y-3">
@@ -251,19 +226,17 @@ export function SemesterCertificateSimulationForm({
                   <div className="flex items-end">
                     <SemesterCourseStatusBadge found={Boolean(status?.found)} />
                   </div>
-                  <DemoOnly>
-                    <div className="flex items-end">
-                      <button
-                        aria-label={`Eliminar curso esperado ${row.code || row.id}`}
-                        className="min-h-10 rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                        disabled={rows.length === 1}
-                        onClick={() => removeRow(row.id)}
-                        type="button"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </DemoOnly>
+                  <div className="flex items-end">
+                    <button
+                      aria-label={`Eliminar curso esperado ${row.code || row.id}`}
+                      className="min-h-10 rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={rows.length === 1}
+                      onClick={() => removeRow(row.id)}
+                      type="button"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -337,7 +310,6 @@ export function SemesterCertificateSimulationForm({
 function isCourseAvailable(
   row: ExpectedCourseFormRow,
   semester: string,
-  teacherCode: string,
   certificates: CertificateGenerationSummary[],
 ): boolean {
   const code = row.code.trim();
@@ -350,7 +322,6 @@ function isCourseAvailable(
 
   return certificates.some((certificate) =>
     certificate.type === "CURSO"
-    && certificate.teacherCode === teacherCode
     && certificate.semester === normalizedSemester
     && certificate.courseCode === code
     && certificate.section === section,
@@ -358,15 +329,11 @@ function isCourseAvailable(
 }
 
 function validateForm(
-  teacherCode: string,
   semester: string,
   rows: ExpectedCourseFormRow[],
 ): string[] {
   const errors: string[] = [];
 
-  if (teacherCode.trim() === "") {
-    errors.push("La sesion actual no tiene codigo docente.");
-  }
   if (semester.trim() === "") {
     errors.push("El semestre es obligatorio.");
   }

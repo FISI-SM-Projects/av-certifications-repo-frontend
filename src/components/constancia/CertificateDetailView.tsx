@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { CertificateDownloadButton } from "@/components/constancia/CertificateDownloadButton";
 import { useAuth } from "@/context/auth/AuthProvider";
 import {
-  construirUrlDescargaPdf,
-  construirUrlVisualizacionPdf,
+  obtenerPdfConstancia,
   obtenerConstanciaPorGeneracion,
+  type CertificateAccessScope,
 } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type {
@@ -27,12 +28,21 @@ type DetailItem = {
 };
 
 export function CertificateDetailView({ generationId, returnTo }: CertificateDetailViewProps) {
-  const { user } = useAuth();
+  const { roles } = useAuth();
   const normalizedGenerationId = generationId.trim();
+  const accessScope: CertificateAccessScope = roles.includes("DOCENTE")
+    ? "self"
+    : "administrative";
   const [certificate, setCertificate] = useState<CertificateGenerationDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const backLink = useMemo(() => buildBackLink(returnTo, user?.role), [returnTo, user?.role]);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const backLink = useMemo(
+    () => buildBackLink(returnTo, roles.includes("DIRECTOR_ESCUELA")),
+    [returnTo, roles],
+  );
 
   const loadCertificate = useCallback(async () => {
     if (normalizedGenerationId === "") {
@@ -45,7 +55,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
     setErrorMessage(null);
 
     try {
-      const data = await obtenerConstanciaPorGeneracion(normalizedGenerationId);
+      const data = await obtenerConstanciaPorGeneracion(normalizedGenerationId, accessScope);
       setCertificate(data);
     } catch (error) {
       if (error instanceof ConstanciaApiError) {
@@ -57,7 +67,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
     } finally {
       setIsLoading(false);
     }
-  }, [normalizedGenerationId]);
+  }, [accessScope, normalizedGenerationId]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -67,14 +77,47 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
     return () => clearTimeout(timeoutId);
   }, [loadCertificate]);
 
-  const pdfUrl = useMemo(
-    () => (certificate ? construirUrlVisualizacionPdf(certificate.generationId) : null),
-    [certificate],
-  );
-  const downloadUrl = useMemo(
-    () => (certificate ? construirUrlDescargaPdf(certificate.generationId) : null),
-    [certificate],
-  );
+  useEffect(() => {
+    if (certificate === null) {
+      return undefined;
+    }
+
+    let objectUrl: string | null = null;
+    let isActive = true;
+    const timeoutId = setTimeout(() => {
+      setIsPdfLoading(true);
+      setPdfError(null);
+
+      void obtenerPdfConstancia(certificate.generationId, accessScope)
+        .then((blob) => {
+          if (!isActive) {
+            return;
+          }
+          objectUrl = URL.createObjectURL(blob);
+          setPdfUrl(objectUrl);
+        })
+        .catch(() => {
+          if (isActive) {
+            setPdfError("No se pudo cargar la vista previa del PDF.");
+            setPdfUrl(null);
+          }
+        })
+        .finally(() => {
+          if (isActive) {
+            setIsPdfLoading(false);
+          }
+        });
+    }, 0);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeoutId);
+      if (objectUrl !== null) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [accessScope, certificate]);
+
   const detailItems = useMemo(
     () => (certificate ? buildDetailItems(certificate) : []),
     [certificate],
@@ -106,7 +149,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
     );
   }
 
-  if (certificate === null || pdfUrl === null || downloadUrl === null) {
+  if (certificate === null) {
     return (
       <PanelMessage
         action={<BackLink href={backLink.href} label={backLink.label} />}
@@ -137,13 +180,12 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <BackLink href={backLink.href} label={backLink.label} />
-            <a
+            <CertificateDownloadButton
               className="rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-              download
-              href={downloadUrl}
-            >
-              Descargar PDF
-            </a>
+              generationId={certificate.generationId}
+              label="Descargar PDF"
+              scope={accessScope}
+            />
           </div>
         </div>
       </div>
@@ -181,22 +223,30 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
                 navegador puede bloquear el visor integrado.
               </p>
             </div>
-            <a
-              className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-              href={pdfUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              Abrir PDF en nueva pestaña
-            </a>
+            {pdfUrl ? (
+              <a
+                className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+                href={pdfUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Abrir PDF en nueva pestaña
+              </a>
+            ) : null}
           </div>
 
           <div className="mt-4 overflow-hidden rounded-lg border border-[var(--border-soft)] bg-[#111]">
-            <iframe
-              className="h-[70vh] min-h-[520px] w-full"
-              src={pdfUrl}
-              title={`Vista previa de ${certificate.generationId}`}
-            />
+            {isPdfLoading ? (
+              <p className="p-6 text-sm text-[var(--muted)]">Cargando vista previa...</p>
+            ) : null}
+            {pdfError ? <p className="p-6 text-sm text-[#f0b8b8]">{pdfError}</p> : null}
+            {pdfUrl ? (
+              <iframe
+                className="h-[70vh] min-h-[520px] w-full"
+                src={pdfUrl}
+                title={`Vista previa de ${certificate.generationId}`}
+              />
+            ) : null}
           </div>
         </article>
       </section>
@@ -249,7 +299,7 @@ function BackLink({ href, label }: BackLinkConfig) {
   );
 }
 
-function buildBackLink(returnTo: string | undefined, role: string | undefined): BackLinkConfig {
+function buildBackLink(returnTo: string | undefined, isDirector: boolean): BackLinkConfig {
   const validatedReturnTo = validateReturnTo(returnTo);
 
   if (validatedReturnTo === "/constancias") {
@@ -264,7 +314,7 @@ function buildBackLink(returnTo: string | undefined, role: string | undefined): 
     return { href: validatedReturnTo, label: "Volver al perfil del docente" };
   }
 
-  if (role === "DIRECTOR") {
+  if (isDirector) {
     return { href: "/director/docentes", label: "Volver al listado de docentes" };
   }
 

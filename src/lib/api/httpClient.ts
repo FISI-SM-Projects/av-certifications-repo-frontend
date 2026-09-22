@@ -33,6 +33,8 @@ export type HttpJsonOptions<T> = Omit<RequestInit, "body"> & {
   defaultErrorMessage?: string;
 };
 
+export type HttpBlobOptions = Omit<HttpJsonOptions<never>, "body" | "validate">;
+
 export async function httpJson<T>(
   path: string,
   options: HttpJsonOptions<T> = {},
@@ -55,6 +57,24 @@ export async function httpJson<T>(
   }
 
   return payload as T;
+}
+
+export async function httpBlob(
+  path: string,
+  options: HttpBlobOptions = {},
+): Promise<Blob> {
+  const response = await request<never>(path, options);
+
+  if (!response.ok) {
+    const payload = await readResponsePayload(response);
+    throw new ApiError(
+      extractMessage(payload) ?? options.defaultErrorMessage ?? "No se pudo completar la solicitud",
+      response.status,
+      { payload },
+    );
+  }
+
+  return response.blob();
 }
 
 async function request<T>(path: string, options: HttpJsonOptions<T>): Promise<Response> {

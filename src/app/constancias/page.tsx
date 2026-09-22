@@ -4,12 +4,12 @@ import { TeacherCertificatesView } from "@/components/constancia/TeacherCertific
 
 export default function ConstanciasPage() {
   return (
-    <RequireRole allowedRoles={["DOCENTE", "ADMIN"]}>
+    <RequireRole allowedRoles={["DOCENTE"]}>
       <AppShell
         breadcrumb="Sprint 3 > Docente > Constancias"
         title="Mis constancias"
         subtitle="Consulta, visualización y descarga de constancias generadas"
-        badges={["Simulación Aula Virtual"]}
+        badges={["Sesion autenticada"]}
       >
         <TeacherCertificatesView />
       </AppShell>

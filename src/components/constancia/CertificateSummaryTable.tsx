@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 
-import { construirUrlDescargaPdf } from "@/services/constancia/constanciaService";
+import { CertificateDownloadButton } from "@/components/constancia/CertificateDownloadButton";
+import type { CertificateAccessScope } from "@/services/constancia/constanciaService";
 import type {
   CertificateGenerationSummary,
   EstadoConstancia,
@@ -14,6 +15,7 @@ type CertificateSummaryTableProps = {
   detailReturnTo?: string;
   emptyMessage?: string;
   showTeacherCode?: boolean;
+  accessScope?: CertificateAccessScope;
 };
 
 export function CertificateSummaryTable({
@@ -21,6 +23,7 @@ export function CertificateSummaryTable({
   detailReturnTo,
   emptyMessage = "Aun no tienes constancias generadas.",
   showTeacherCode = false,
+  accessScope = "self",
 }: CertificateSummaryTableProps) {
   if (certificates.length === 0) {
     return (
@@ -96,13 +99,11 @@ export function CertificateSummaryTable({
                     >
                       Ver detalle
                     </Link>
-                    <a
+                    <CertificateDownloadButton
                       className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md bg-[var(--gold)] px-3 py-2 text-center text-xs font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-                      download
-                      href={construirUrlDescargaPdf(certificate.generationId)}
-                    >
-                      Descargar
-                    </a>
+                      generationId={certificate.generationId}
+                      scope={accessScope}
+                    />
                   </div>
                 </td>
               </tr>

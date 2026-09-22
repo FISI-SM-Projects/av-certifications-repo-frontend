@@ -1,5 +1,12 @@
-import { API_BASE_URL } from "@/lib/api";
-import { ApiError, httpJson, isRecord, type HttpJsonOptions } from "@/lib/api/httpClient";
+import { API_ROUTES } from "@/config/apiRoutes";
+import {
+  ApiError,
+  httpBlob,
+  httpJson,
+  isRecord,
+  type HttpBlobOptions,
+  type HttpJsonOptions,
+} from "@/lib/api/httpClient";
 import type {
   CertificateGenerationDetail,
   CertificateGenerationSummary,
@@ -17,41 +24,40 @@ import {
 const ERROR_CONEXION = "No se pudo conectar con el backend de constancias";
 const ERROR_SOLICITUD = "No se pudo completar la solicitud de constancias";
 
+export type CertificateAccessScope = "self" | "administrative";
+
 export async function generarConstanciaCurso(
   request: CourseCertificateRequest,
 ): Promise<CourseCertificateResponse> {
-  return requestConstancia<CourseCertificateResponse>("/api/v1/constancias/curso", {
+  return requestConstancia<CourseCertificateResponse>(API_ROUTES.teachers.certificates.course, {
     method: "POST",
     body: request,
-    validate: validateCourseCertificateResponse,
+    validate: (payload) => validateResponseEnvelope(payload, validateCourseCertificateResponse),
   });
 }
 
 export async function generarConstanciaSemestral(
   request: SemesterCertificateRequest,
 ): Promise<SemesterCertificateResponse> {
-  return requestConstancia<SemesterCertificateResponse>("/api/v1/constancias/semestral", {
+  return requestConstancia<SemesterCertificateResponse>(API_ROUTES.teachers.certificates.semester, {
     method: "POST",
     body: request,
-    validate: validateSemesterCertificateResponse,
+    validate: (payload) => validateResponseEnvelope(payload, validateSemesterCertificateResponse),
   });
 }
 
-export async function listarConstanciasDocente(
-  teacherCode: string,
-): Promise<CertificateGenerationSummary[]> {
-  const codigoDocente = requireNonBlank(teacherCode, "El codigo docente es obligatorio");
-
+export async function listarConstanciasDocente(): Promise<CertificateGenerationSummary[]> {
   return requestConstancia<CertificateGenerationSummary[]>(
-    `/api/v1/constancias/docentes/${encodeURIComponent(codigoDocente)}`,
+    API_ROUTES.teachers.certificates.root,
     {
-      validate: validateCertificateGenerationList,
+      validate: (payload) => validateResponseEnvelope(payload, validateCertificateGenerationList),
     },
   );
 }
 
 export async function obtenerConstanciaPorGeneracion(
   generationId: string,
+  scope: CertificateAccessScope = "self",
 ): Promise<CertificateGenerationDetail> {
   const idGeneracion = requireNonBlank(
     generationId,
@@ -59,15 +65,22 @@ export async function obtenerConstanciaPorGeneracion(
   );
 
   return requestConstancia<CertificateGenerationDetail>(
-    `/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}`,
+    scope === "self"
+      ? API_ROUTES.teachers.certificates.generation(idGeneracion)
+      : API_ROUTES.certificates.generation(idGeneracion),
     {
-      validate: validateCertificateGenerationSummary,
+      validate: (payload) => validateScopedResponse(
+        payload,
+        scope,
+        validateCertificateGenerationSummary,
+      ),
     },
   );
 }
 
 export async function obtenerHistorialConstancia(
   certificateKey: string,
+  scope: CertificateAccessScope = "self",
 ): Promise<CertificateHistoryItem[]> {
   const claveConstancia = requireNonBlank(
     certificateKey,
@@ -75,29 +88,49 @@ export async function obtenerHistorialConstancia(
   );
 
   return requestConstancia<CertificateHistoryItem[]>(
-    `/api/v1/constancias/certificados/${encodeURIComponent(claveConstancia)}/historial`,
+    scope === "self"
+      ? API_ROUTES.teachers.certificates.history(claveConstancia)
+      : API_ROUTES.certificates.history(claveConstancia),
     {
-      validate: validateCertificateGenerationList,
+      validate: (payload) => validateScopedResponse(
+        payload,
+        scope,
+        validateCertificateGenerationList,
+      ),
     },
   );
 }
 
-export function construirUrlVisualizacionPdf(generationId: string): string {
+export async function obtenerPdfConstancia(
+  generationId: string,
+  scope: CertificateAccessScope = "self",
+): Promise<Blob> {
   const idGeneracion = requireNonBlank(
     generationId,
     "El identificador de generacion es obligatorio",
   );
 
-  return `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/pdf`;
+  return requestConstanciaBlob(
+    scope === "self"
+      ? API_ROUTES.teachers.certificates.pdf(idGeneracion)
+      : API_ROUTES.certificates.pdf(idGeneracion),
+  );
 }
 
-export function construirUrlDescargaPdf(generationId: string): string {
+export async function descargarPdfConstancia(
+  generationId: string,
+  scope: CertificateAccessScope = "self",
+): Promise<Blob> {
   const idGeneracion = requireNonBlank(
     generationId,
     "El identificador de generacion es obligatorio",
   );
 
-  return `${API_BASE_URL}/api/v1/constancias/generaciones/${encodeURIComponent(idGeneracion)}/download`;
+  return requestConstanciaBlob(
+    scope === "self"
+      ? API_ROUTES.teachers.certificates.download(idGeneracion)
+      : API_ROUTES.certificates.download(idGeneracion),
+  );
 }
 
 async function requestConstancia<T>(
@@ -117,6 +150,41 @@ async function requestConstancia<T>(
 
     throw error;
   }
+}
+
+async function requestConstanciaBlob(path: string, options: HttpBlobOptions = {}): Promise<Blob> {
+  try {
+    return await httpBlob(path, {
+      ...options,
+      networkErrorMessage: ERROR_CONEXION,
+      defaultErrorMessage: ERROR_SOLICITUD,
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw toConstanciaApiError(error);
+    }
+
+    throw error;
+  }
+}
+
+function validateResponseEnvelope<T>(
+  payload: unknown,
+  validateData: (data: unknown) => T,
+): T {
+  if (!isRecord(payload) || payload.success !== true || !("data" in payload)) {
+    throw new ApiError("La respuesta de constancias no tiene el formato esperado.", 0);
+  }
+
+  return validateData(payload.data);
+}
+
+function validateScopedResponse<T>(
+  payload: unknown,
+  scope: CertificateAccessScope,
+  validateData: (data: unknown) => T,
+): T {
+  return scope === "self" ? validateResponseEnvelope(payload, validateData) : validateData(payload);
 }
 
 function toConstanciaApiError(error: ApiError): ConstanciaApiError {

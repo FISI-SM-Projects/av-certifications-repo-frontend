@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 
-import type { UsuarioSesion } from "@/types/auth/auth.types";
 import { generarConstanciaCurso } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type {
@@ -20,12 +19,6 @@ type CourseFormState = {
   semester: string;
 };
 
-type IssuerFormState = {
-  system: string;
-  executed_by_userid: string;
-  executed_by_email: string;
-};
-
 type FormField = {
   id: string;
   label: string;
@@ -34,9 +27,7 @@ type FormField = {
   onChange?: (value: string) => void;
 };
 
-type CourseCertificateSimulationFormProps = {
-  user: UsuarioSesion;
-  teacherCode: string;
+type CourseCertificateFormProps = {
   onCancel: () => void;
   onGenerated: () => Promise<void> | void;
 };
@@ -51,16 +42,9 @@ const INITIAL_COURSE_STATE: CourseFormState = {
   semester: "26.1",
 };
 
-const INITIAL_ISSUER_STATE: IssuerFormState = {
-  system: "moodle",
-  executed_by_userid: "demo-user-001",
-  executed_by_email: "usuario.demo@unmsm.edu.pe",
-};
+const INITIAL_SOURCE_SYSTEM = "moodle";
 
 const FIELD_LABELS: Record<string, string> = {
-  "teacher.full_name": "Nombre completo del docente",
-  "teacher.email": "Correo institucional del docente",
-  "teacher.teacher_code": "Código docente",
   "course.code": "Código del curso",
   "course.subject": "Nombre del curso",
   "course.cycle": "Ciclo",
@@ -68,49 +52,21 @@ const FIELD_LABELS: Record<string, string> = {
   "course.school": "Escuela",
   "course.plan": "Plan",
   "course.semester": "Semestre",
-  "issuer.system": "Sistema emisor",
-  "issuer.executed_by_userid": "Usuario ejecutor",
-  "issuer.executed_by_email": "Correo del ejecutor",
+  source_system: "Sistema emisor",
 };
 
-export function CourseCertificateSimulationForm({
-  user,
-  teacherCode,
+export function CourseCertificateForm({
   onCancel,
   onGenerated,
-}: CourseCertificateSimulationFormProps) {
+}: CourseCertificateFormProps) {
   const [course, setCourse] = useState<CourseFormState>(INITIAL_COURSE_STATE);
-  const [issuer, setIssuer] = useState<IssuerFormState>(INITIAL_ISSUER_STATE);
+  const [sourceSystem, setSourceSystem] = useState(INITIAL_SOURCE_SYSTEM);
   const [validationMissingFields, setValidationMissingFields] = useState<string[]>([]);
   const [apiMissingFields, setApiMissingFields] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [successResponse, setSuccessResponse] = useState<CourseCertificateResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const teacherFields = useMemo<FormField[]>(
-    () => [
-      {
-        id: "teacher-full-name",
-        label: "Nombre completo",
-        value: user.fullName,
-        readOnly: true,
-      },
-      {
-        id: "teacher-email",
-        label: "Correo institucional",
-        value: user.email,
-        readOnly: true,
-      },
-      {
-        id: "teacher-code",
-        label: "Código docente",
-        value: teacherCode,
-        readOnly: true,
-      },
-    ],
-    [teacherCode, user.email, user.fullName],
-  );
 
   const courseFields: FormField[] = [
     {
@@ -157,34 +113,17 @@ export function CourseCertificateSimulationForm({
     },
   ];
 
-  const issuerFields: FormField[] = [
+  const sourceFields: FormField[] = [
     {
-      id: "issuer-system",
+      id: "source-system",
       label: "Sistema",
-      value: issuer.system,
-      readOnly: true,
-      onChange: (value) => updateIssuerField("system", value),
-    },
-    {
-      id: "issuer-userid",
-      label: "Usuario ejecutor",
-      value: issuer.executed_by_userid,
-      onChange: (value) => updateIssuerField("executed_by_userid", value),
-    },
-    {
-      id: "issuer-email",
-      label: "Correo del ejecutor",
-      value: issuer.executed_by_email,
-      onChange: (value) => updateIssuerField("executed_by_email", value),
+      value: sourceSystem,
+      onChange: setSourceSystem,
     },
   ];
 
   function updateCourseField(field: keyof CourseFormState, value: string) {
     setCourse((current) => ({ ...current, [field]: value }));
-  }
-
-  function updateIssuerField(field: keyof IssuerFormState, value: string) {
-    setIssuer((current) => ({ ...current, [field]: value }));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -199,7 +138,7 @@ export function CourseCertificateSimulationForm({
     setSuccessResponse(null);
     setApiMissingFields([]);
 
-    const validationErrors = validateForm(user, teacherCode, course, issuer);
+    const validationErrors = validateForm(course, sourceSystem);
 
     if (validationErrors.length > 0) {
       setValidationMissingFields(validationErrors);
@@ -210,11 +149,6 @@ export function CourseCertificateSimulationForm({
     setIsSubmitting(true);
 
     const request: CourseCertificateRequest = {
-      teacher: {
-        full_name: user.fullName,
-        email: user.email,
-        teacher_code: teacherCode,
-      },
       course: {
         code: course.code,
         subject: course.subject,
@@ -224,11 +158,7 @@ export function CourseCertificateSimulationForm({
         plan: course.plan,
         semester: course.semester,
       },
-      issuer: {
-        system: issuer.system,
-        executed_by_userid: issuer.executed_by_userid,
-        executed_by_email: issuer.executed_by_email,
-      },
+      source_system: sourceSystem,
     };
 
     try {
@@ -253,14 +183,13 @@ export function CourseCertificateSimulationForm({
       <div className="flex flex-col gap-3 border-b border-[var(--border-soft)] pb-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-            Simulación Aula Virtual
+            Generación autenticada
           </p>
           <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">
             Recepción de constancia por curso
           </h3>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-            Este formulario construye el mismo JSON que enviaría Aula Virtual. Los datos del
-            docente vienen de la sesión y no son editables.
+            El backend obtiene la identidad del docente desde la sesión JWT.
           </p>
         </div>
         <button
@@ -273,14 +202,8 @@ export function CourseCertificateSimulationForm({
       </div>
 
       <form className="mt-5 space-y-6" onSubmit={handleSubmit}>
-        <FormSection description="Identidad usada para generar la constancia." title="Datos del docente">
-          {teacherFields.map((field) => (
-            <TextField field={field} key={field.id} />
-          ))}
-        </FormSection>
-
         <FormSection
-          description="Valores demo editables. Todos se envían como texto al backend."
+          description="Datos académicos que aparecerán en la constancia."
           title="Datos del curso"
         >
           {courseFields.map((field) => (
@@ -288,8 +211,8 @@ export function CourseCertificateSimulationForm({
           ))}
         </FormSection>
 
-        <FormSection description="Información visible del sistema que simula el envío." title="Datos del emisor simulado">
-          {issuerFields.map((field) => (
+        <FormSection description="Sistema que origina la solicitud." title="Origen de la solicitud">
+          {sourceFields.map((field) => (
             <TextField field={field} key={field.id} />
           ))}
         </FormSection>
@@ -421,15 +344,10 @@ function FeedbackPanel({
 }
 
 function validateForm(
-  user: UsuarioSesion,
-  teacherCode: string,
   course: CourseFormState,
-  issuer: IssuerFormState,
+  sourceSystem: string,
 ): string[] {
   const requiredValues: Array<[string, string | null]> = [
-    ["teacher.full_name", user.fullName],
-    ["teacher.email", user.email],
-    ["teacher.teacher_code", teacherCode],
     ["course.code", course.code],
     ["course.subject", course.subject],
     ["course.cycle", course.cycle],
@@ -437,9 +355,7 @@ function validateForm(
     ["course.school", course.school],
     ["course.plan", course.plan],
     ["course.semester", course.semester],
-    ["issuer.system", issuer.system],
-    ["issuer.executed_by_userid", issuer.executed_by_userid],
-    ["issuer.executed_by_email", issuer.executed_by_email],
+    ["source_system", sourceSystem],
   ];
 
   return requiredValues

@@ -14,6 +14,7 @@ export function ConstanciasTable({
 }: ConstanciasTableProps) {
   return (
     <CertificateSummaryTable
+      accessScope="administrative"
       certificates={constancias}
       detailReturnTo={detailReturnTo}
       emptyMessage={emptyMessage}

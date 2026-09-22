@@ -21,9 +21,9 @@ export default async function CertificateDetailPage({
   const returnTo = Array.isArray(query.returnTo) ? query.returnTo[0] : query.returnTo;
 
   return (
-    <RequireRole allowedRoles={["DOCENTE", "DIRECTOR", "ADMIN"]}>
+    <RequireRole allowedRoles={["DOCENTE", "DIRECTOR_ESCUELA", "DIRECTOR", "ADMIN"]}>
       <AppShell
-        badges={["Simulación Aula Virtual"]}
+        badges={["Sesion autenticada"]}
         breadcrumb="Sprint 3 > Docente > Constancias > Detalle"
         subtitle="Visualización y descarga del documento generado"
         title="Detalle de constancia"
