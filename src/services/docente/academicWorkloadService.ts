@@ -10,6 +10,7 @@ import type {
 } from "@/types/docente/academicWorkload.types";
 
 const SCHOOLS: School[] = ["EG", "SI", "SW", "CC", "IA"];
+const ACADEMIC_WORKLOAD_PAGE_SIZE = 10;
 
 export async function getAuthenticatedTeacherCourses(
   query: AcademicWorkloadQuery,
@@ -33,6 +34,32 @@ export async function getAuthenticatedTeacherCourses(
       validate: validateAcademicWorkloadResponse,
     },
   );
+}
+
+export async function getAllAuthenticatedTeacherCourses(
+  signal?: AbortSignal,
+): Promise<AcademicWorkload[]> {
+  const workloadsById = new Map<number, AcademicWorkload>();
+  let page = 0;
+  let totalPages = 1;
+
+  while (page < totalPages) {
+    const response = await getAuthenticatedTeacherCourses(
+      { page, size: ACADEMIC_WORKLOAD_PAGE_SIZE },
+      signal,
+    );
+
+    response.data.forEach((workload) => {
+      if (!workloadsById.has(workload.id)) {
+        workloadsById.set(workload.id, workload);
+      }
+    });
+
+    totalPages = response.pagination.totalPages;
+    page += 1;
+  }
+
+  return Array.from(workloadsById.values());
 }
 
 function appendNumber(params: URLSearchParams, name: string, value?: number): void {
