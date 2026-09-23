@@ -36,7 +36,7 @@ describe("AppShell", () => {
   });
 
   it("muestra la identidad docente en el sidebar, sin repetirla en el header", () => {
-    render(<AppShell title="Perfil docente">Contenido</AppShell>);
+    render(<AppShell title="Inicio">Contenido</AppShell>);
 
     const sidebar = screen.getByRole("complementary");
     const header = screen.getByRole("banner");
@@ -45,7 +45,8 @@ describe("AppShell", () => {
     expect(within(sidebar).getByText("CC")).toBeInTheDocument();
     expect(within(header).queryByText("Docente De Prueba")).not.toBeInTheDocument();
     expect(within(header).queryByText("DOCENTE")).not.toBeInTheDocument();
-    expect(within(header).getByRole("heading", { name: "Perfil docente" })).toBeInTheDocument();
+    expect(within(header).getByRole("heading", { name: "Inicio" })).toBeInTheDocument();
+    expect(within(sidebar).getByRole("link", { name: /^Inicio/ })).toHaveAttribute("href", "/perfil-docente");
     expect(within(sidebar).getByRole("link", { name: /Carga académica/ })).toHaveAttribute("href", "/carga-academica");
     const logout = within(sidebar).getByRole("button", { name: "Cerrar sesión" });
     expect(logout).toBeInTheDocument();
@@ -54,7 +55,7 @@ describe("AppShell", () => {
   });
 
   it("abre el drawer con la misma identidad, navegación y logout", () => {
-    render(<AppShell title="Perfil docente">Contenido</AppShell>);
+    render(<AppShell title="Inicio">Contenido</AppShell>);
     const menuButton = screen.getByRole("button", { name: "Abrir menú de navegación" });
 
     expect(menuButton).toHaveAttribute("aria-controls", "app-navigation");
@@ -71,7 +72,7 @@ describe("AppShell", () => {
   });
 
   it("cierra el drawer con el botón, Escape y una opción de navegación", () => {
-    render(<AppShell title="Perfil docente">Contenido</AppShell>);
+    render(<AppShell title="Inicio">Contenido</AppShell>);
     const menuButton = screen.getByRole("button", { name: "Abrir menú de navegación" });
 
     fireEvent.click(menuButton);

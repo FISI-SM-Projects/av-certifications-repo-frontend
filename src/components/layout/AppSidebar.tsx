@@ -18,7 +18,7 @@ type MenuItem = {
 
 const MENU_BY_ROLE: Record<RolUsuario, MenuItem[]> = {
   DOCENTE: [
-    { label: "Perfil docente", href: "/perfil-docente" },
+    { label: "Inicio", href: "/perfil-docente" },
     { label: "Carga académica", href: "/carga-academica", backendOnly: true },
     { label: "Mis constancias", href: "/constancias", backendOnly: true },
   ],
