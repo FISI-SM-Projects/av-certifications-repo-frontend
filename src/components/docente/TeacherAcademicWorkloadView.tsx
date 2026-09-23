@@ -94,7 +94,37 @@ export function TeacherAcademicWorkloadView() {
         </p>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-[var(--border-soft)] md:hidden">
+        {response.data.map((workload) => {
+          const courseTitleId = `workload-course-${workload.id}`;
+
+          return (
+            <article aria-labelledby={courseTitleId} className="space-y-4 px-5 py-5" key={workload.id}>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--gold-soft)]">
+                  {workload.course.code}
+                </p>
+                <h3 className="mt-1 text-base font-semibold leading-6 text-[var(--text)]" id={courseTitleId}>
+                  {workload.course.name}
+                </h3>
+              </div>
+
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <WorkloadField label="Período" value={workload.academicPeriod.semesterCode} />
+                <WorkloadField label="Sección" value={workload.section} />
+              </dl>
+
+              <dl className="grid grid-cols-3 gap-3 border-t border-[var(--border-soft)] pt-3">
+                <WorkloadField label="Ciclo" secondary value={workload.cycle} />
+                <WorkloadField label="Plan" secondary value={workload.plan} />
+                <WorkloadField label="Escuela" secondary value={workload.school} />
+              </dl>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[860px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[rgba(90,15,36,0.88)] text-[var(--muted)]">
@@ -131,12 +161,12 @@ export function TeacherAcademicWorkloadView() {
       </div>
 
       <div className="flex flex-col gap-3 border-t border-[var(--border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-[var(--muted)]">
+        <p className="text-center text-sm text-[var(--muted)] sm:text-left">
           Página {currentPage} de {pagination.totalPages}
         </p>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex">
           <button
-            className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)] disabled:cursor-not-allowed disabled:border-[var(--border-soft)] disabled:bg-black/20 disabled:text-[var(--muted)] disabled:opacity-60 disabled:hover:border-[var(--border-soft)]"
             disabled={!hasPreviousPage}
             onClick={() => setPage(pagination.pageNumber - 1)}
             type="button"
@@ -144,7 +174,7 @@ export function TeacherAcademicWorkloadView() {
             Anterior
           </button>
           <button
-            className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)] disabled:cursor-not-allowed disabled:border-[var(--border-soft)] disabled:bg-black/20 disabled:text-[var(--muted)] disabled:opacity-60 disabled:hover:border-[var(--border-soft)]"
             disabled={!hasNextPage}
             onClick={() => setPage(pagination.pageNumber + 1)}
             type="button"
@@ -154,6 +184,25 @@ export function TeacherAcademicWorkloadView() {
         </div>
       </div>
     </section>
+  );
+}
+
+function WorkloadField({
+  label,
+  secondary = false,
+  value,
+}: {
+  label: string;
+  secondary?: boolean;
+  value: number | string;
+}) {
+  return (
+    <div>
+      <dt className="text-xs font-medium text-[var(--muted)]">{label}</dt>
+      <dd className={`mt-1 font-semibold ${secondary ? "text-sm text-[var(--muted)]" : "text-sm text-[var(--text)]"}`}>
+        {value}
+      </dd>
+    </div>
   );
 }
 
