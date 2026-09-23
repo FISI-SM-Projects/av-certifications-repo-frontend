@@ -18,9 +18,9 @@ type MenuItem = {
 
 const MENU_BY_ROLE: Record<RolUsuario, MenuItem[]> = {
   DOCENTE: [
-    { label: "Perfil Docente", href: "/perfil-docente" },
+    { label: "Perfil docente", href: "/perfil-docente" },
     { label: "Carga académica", href: "/carga-academica", backendOnly: true },
-    { label: "Constancias", href: "/constancias", backendOnly: true },
+    { label: "Mis constancias", href: "/constancias", backendOnly: true },
   ],
   DIRECTOR: [
     { label: "Dashboard", href: "/director" },
@@ -72,7 +72,7 @@ export function AppSidebar() {
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--gold-soft)]">
               UNMSM
             </p>
-            <h1 className="text-lg font-semibold leading-tight">Gestion Docente</h1>
+            <h1 className="text-lg font-semibold leading-tight">Gestión Docente</h1>
           </div>
         </div>
       </div>
@@ -80,11 +80,11 @@ export function AppSidebar() {
       <div className="space-y-6 px-4 py-5">
         <section>
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-            Sesion
+            Sesión
           </p>
           <div className="rounded-md border border-[var(--border-soft)] bg-[var(--surface)] p-3">
             {isLoading ? (
-              <p className="text-sm text-[var(--muted)]">Cargando sesion...</p>
+              <p className="text-sm text-[var(--muted)]">Cargando sesión...</p>
             ) : isAuthenticated && user !== null ? (
               <>
                 <p className="font-semibold">{user.fullName}</p>
@@ -94,7 +94,7 @@ export function AppSidebar() {
                 ) : null}
                 <DemoOnly>
                   <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">
-                    Sesion simulada
+                    Sesión simulada
                   </p>
                 </DemoOnly>
               </>
@@ -108,9 +108,9 @@ export function AppSidebar() {
               </>
             ) : (
               <>
-                <p className="font-semibold">Sin sesion</p>
+                <p className="font-semibold">Sin sesión</p>
                 <p className="mt-1 text-xs text-[var(--muted)]">
-                  {isDemo ? "Ingresa desde login demo" : "Inicia sesion para continuar"}
+                  {isDemo ? "Ingresa desde login demo" : "Inicia sesión para continuar"}
                 </p>
               </>
             )}
@@ -124,7 +124,7 @@ export function AppSidebar() {
           <nav className="space-y-1.5">
             {menuItems.length === 0 ? (
               <div className="rounded-md px-3 py-2.5 text-[var(--muted)] opacity-70">
-                Sin menu disponible
+                Sin menú disponible
               </div>
             ) : null}
 
@@ -164,7 +164,7 @@ export function AppSidebar() {
       <div className="mt-auto border-t border-[var(--border)] px-4 py-4">
         {isAuthenticated ? <LogoutButton className="w-full rounded-md border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]" /> : null}
         <div className="mt-4 flex items-center justify-between text-xs text-[var(--muted)]">
-          <span>{isDemo ? "Sprint 3" : "Gestion Docente"}</span>
+          <span>{isDemo ? "Sprint 3" : "Gestión Docente"}</span>
           <span className="font-semibold text-[var(--gold-soft)]">Constancias</span>
         </div>
       </div>

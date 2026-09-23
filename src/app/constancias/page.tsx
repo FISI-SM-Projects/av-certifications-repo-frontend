@@ -9,7 +9,6 @@ export default function ConstanciasPage() {
         breadcrumb="Sprint 3 > Docente > Constancias"
         title="Mis constancias"
         subtitle="Consulta, visualización y descarga de constancias generadas"
-        badges={["Sesion autenticada"]}
       >
         <TeacherCertificatesView />
       </AppShell>

@@ -21,7 +21,7 @@ type CertificateSummaryTableProps = {
 export function CertificateSummaryTable({
   certificates,
   detailReturnTo,
-  emptyMessage = "Aun no tienes constancias generadas.",
+  emptyMessage = "Aún no tienes constancias generadas.",
   showTeacherCode = false,
   accessScope = "self",
 }: CertificateSummaryTableProps) {
@@ -38,7 +38,7 @@ export function CertificateSummaryTable({
       <div className="border-b border-[var(--border)] px-5 py-4">
         <h3 className="text-lg font-semibold text-[var(--text)]">Listado de constancias</h3>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Cada registro corresponde a la ultima version visible de una constancia logica.
+          Se muestra la versión más reciente de cada constancia.
         </p>
       </div>
 
@@ -58,12 +58,12 @@ export function CertificateSummaryTable({
           <thead className="bg-[var(--surface-soft)] text-xs uppercase tracking-[0.12em] text-[var(--muted)]">
             <tr>
               <th className="px-4 py-3 font-semibold">Tipo</th>
-              {showTeacherCode ? <th className="px-4 py-3 font-semibold">Codigo docente</th> : null}
+              {showTeacherCode ? <th className="px-4 py-3 font-semibold">Código docente</th> : null}
               <th className="px-4 py-3 font-semibold">Curso</th>
-              <th className="px-4 py-3 font-semibold">Seccion</th>
+              <th className="px-4 py-3 font-semibold">Sección</th>
               <th className="px-4 py-3 font-semibold">Semestre</th>
               <th className="px-4 py-3 font-semibold">Estado</th>
-              <th className="px-4 py-3 font-semibold">Version</th>
+              <th className="px-4 py-3 font-semibold">Versión</th>
               <th className="px-4 py-3 font-semibold">Fecha</th>
               <th className="px-4 py-3 font-semibold">Acciones</th>
             </tr>
@@ -71,7 +71,9 @@ export function CertificateSummaryTable({
           <tbody className="divide-y divide-[var(--border-soft)]">
             {certificates.map((certificate) => (
               <tr className="align-middle transition hover:bg-[rgba(90,15,36,0.28)]" key={certificate.generationId}>
-                <td className="px-4 py-4 font-medium text-[var(--text)]">{certificate.type}</td>
+                <td className="px-4 py-4 font-medium text-[var(--text)]">
+                  {certificate.type === "CURSO" ? "Por curso" : "Semestral"}
+                </td>
                 {showTeacherCode ? (
                   <td className="px-4 py-4 text-[var(--muted)]">{certificate.teacherCode}</td>
                 ) : null}

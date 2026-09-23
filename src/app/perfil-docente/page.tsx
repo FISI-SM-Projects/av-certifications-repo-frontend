@@ -7,8 +7,8 @@ export default function PerfilDocentePage() {
     <PerfilDocenteAccessGuard>
       <AppShell
         breadcrumb="Sprint 2 > Perfil Docente"
-        title="Perfil Docente"
-        subtitle="Sistema de Gestion Docente FISI"
+        title="Perfil docente"
+        subtitle="Sistema de Gestión Docente FISI"
       >
         <TeacherProfileView />
       </AppShell>

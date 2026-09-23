@@ -4,7 +4,7 @@ export default function PerfilDocenteLoading() {
   return (
     <AppShell
       breadcrumb="Sprint 2 > Perfil Docente"
-      title="Perfil Docente"
+      title="Perfil docente"
       subtitle="Sistema de Gestión Docente FISI"
       badges={["Demo"]}
     >

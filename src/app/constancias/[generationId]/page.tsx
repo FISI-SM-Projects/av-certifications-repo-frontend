@@ -23,7 +23,6 @@ export default async function CertificateDetailPage({
   return (
     <RequireRole allowedRoles={["DOCENTE", "DIRECTOR_ESCUELA", "DIRECTOR", "ADMIN"]}>
       <AppShell
-        badges={["Sesion autenticada"]}
         breadcrumb="Sprint 3 > Docente > Constancias > Detalle"
         subtitle="Visualización y descarga del documento generado"
         title="Detalle de constancia"

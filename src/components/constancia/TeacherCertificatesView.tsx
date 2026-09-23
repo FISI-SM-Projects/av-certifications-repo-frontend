@@ -31,7 +31,7 @@ export function TeacherCertificatesView() {
       if (error instanceof ConstanciaApiError) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("No se pudo conectar con el backend de constancias.");
+        setErrorMessage("No se pudieron cargar las constancias. Inténtalo nuevamente.");
       }
       setCertificates([]);
     } finally {
@@ -54,15 +54,9 @@ export function TeacherCertificatesView() {
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-              Sesion docente autenticada
-            </p>
             <h2 className="mt-1 text-2xl font-semibold text-[var(--text)]">Mis constancias</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Consulta, visualizacion y descarga de constancias generadas.
-            </p>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              La identidad del docente se obtiene de forma segura desde la sesion actual.
+              Consulta, visualiza y descarga tus constancias.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
@@ -119,8 +113,8 @@ export function TeacherCertificatesView() {
       {!isLoading && errorMessage === null && certificates.length === 0 ? (
         <PanelMessage
           eyebrow="Sin constancias"
-          title="Aun no tienes constancias generadas."
-          message="Las constancias apareceran aqui cuando esten disponibles para tu perfil."
+          title="Aún no tienes constancias generadas."
+          message="Las constancias aparecerán aquí cuando estén disponibles para tu perfil."
         />
       ) : null}
 
@@ -132,7 +126,7 @@ export function TeacherCertificatesView() {
                 Resumen de constancias
               </p>
               <h3 className="mt-1 text-lg font-semibold text-[var(--text)]">
-                Ultimas versiones visibles
+                Constancias disponibles
               </h3>
             </div>
             <SummaryGrid items={summary} />
@@ -149,7 +143,7 @@ function buildSummary(certificates: CertificateGenerationSummary[]): SummaryItem
   const latestSemester = certificates[0]?.semester ?? "Sin semestre";
 
   return [
-    { label: "Visibles", value: certificates.length },
+    { label: "Constancias", value: certificates.length },
     {
       label: "Generadas",
       value: certificates.filter((certificate) => certificate.status === "GENERADO").length,
@@ -158,7 +152,7 @@ function buildSummary(certificates: CertificateGenerationSummary[]): SummaryItem
       label: "Aprobadas",
       value: certificates.filter((certificate) => certificate.status === "APROBADO").length,
     },
-    { label: "Periodos", value: periodos.size },
+    { label: "Períodos", value: periodos.size },
     { label: "Semestre", value: latestSemester },
   ];
 }

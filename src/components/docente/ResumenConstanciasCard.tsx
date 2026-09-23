@@ -11,13 +11,13 @@ export function ResumenConstanciasCard({ constancias }: ResumenConstanciasCardPr
   const aprobadas = constancias.filter(
     (constancia) => constancia.status === "APROBADO",
   ).length;
-  const ultimoPeriodo = constancias[0]?.semester ?? "Sin periodo";
+  const ultimoPeriodo = constancias[0]?.semester ?? "Sin período";
 
   return (
     <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_14px_36px_rgba(0,0,0,0.14)]">
       <div className="mb-4">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
-          Resumen del periodo
+          Resumen del período
         </p>
         <h3 className="mt-1 text-lg font-semibold text-[var(--text)]">
           Estado de constancias
@@ -27,7 +27,7 @@ export function ResumenConstanciasCard({ constancias }: ResumenConstanciasCardPr
         <MetricCard label="Total constancias" value={constancias.length} />
         <MetricCard label="Generadas" value={generadas} />
         <MetricCard label="Aprobadas" value={aprobadas} />
-        <MetricCard label="Ultimo periodo" value={ultimoPeriodo} />
+        <MetricCard label="Último período" value={ultimoPeriodo} />
       </div>
     </section>
   );

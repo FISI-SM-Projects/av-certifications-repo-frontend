@@ -90,7 +90,7 @@ export function TeacherAcademicWorkloadView() {
           Cursos asignados
         </p>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Mostrando {pagination.numberOfElements} de {pagination.totalElements} registros.
+          Mostrando {pagination.numberOfElements} de {pagination.totalElements} cursos asignados.
         </p>
       </div>
 

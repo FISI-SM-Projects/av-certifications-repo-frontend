@@ -37,7 +37,7 @@ export function TeacherProfileView() {
       if (error instanceof PerfilDocenteApiError) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("No se pudo conectar con el backend.");
+        setErrorMessage("No se pudo cargar el perfil docente. Inténtalo nuevamente.");
       }
       setPerfil(null);
     } finally {
@@ -58,7 +58,7 @@ export function TeacherProfileView() {
   }, [cargarPerfil, isAuthLoading, teacherCode]);
 
   if (isAuthLoading) {
-    return <PanelMessage message="Verificando sesion..." />;
+    return <PanelMessage message="Verificando sesión..." />;
   }
 
   if (teacher !== null) {
@@ -73,9 +73,9 @@ export function TeacherProfileView() {
   if (teacherCode === "") {
     return (
       <PanelMessage
-        eyebrow="Sesion sin codigo docente"
-        message="La consulta del perfil docente requiere que la sesion tenga un teacherCode."
-        title="La sesion actual no tiene un codigo docente asociado."
+        eyebrow="Perfil no disponible"
+        message="No se encontró un perfil docente asociado a esta sesión."
+        title="No se pudo mostrar el perfil docente"
       />
     );
   }
@@ -115,7 +115,7 @@ export function TeacherProfileView() {
       <ConstanciasTable
         constancias={perfil.constancias}
         detailReturnTo="/perfil-docente"
-        emptyMessage="Aun no tienes constancias generadas."
+        emptyMessage="Aún no tienes constancias generadas."
       />
     </div>
   );

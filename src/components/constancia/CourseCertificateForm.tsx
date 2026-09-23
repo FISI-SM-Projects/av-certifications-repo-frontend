@@ -64,7 +64,6 @@ export function CourseCertificateForm({
   const [validationMissingFields, setValidationMissingFields] = useState<string[]>([]);
   const [apiMissingFields, setApiMissingFields] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [successResponse, setSuccessResponse] = useState<CourseCertificateResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -134,7 +133,6 @@ export function CourseCertificateForm({
     }
 
     setErrorMessage(null);
-    setErrorStatus(null);
     setSuccessResponse(null);
     setApiMissingFields([]);
 
@@ -168,10 +166,9 @@ export function CourseCertificateForm({
     } catch (error) {
       if (error instanceof ConstanciaApiError) {
         setErrorMessage(error.message);
-        setErrorStatus(error.status > 0 ? error.status : null);
         setApiMissingFields(error.missingFields);
       } else {
-        setErrorMessage("No se pudo conectar con el backend de constancias.");
+        setErrorMessage("No se pudo generar la constancia. Inténtalo nuevamente.");
       }
     } finally {
       setIsSubmitting(false);
@@ -183,14 +180,11 @@ export function CourseCertificateForm({
       <div className="flex flex-col gap-3 border-b border-[var(--border-soft)] pb-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-            Generación autenticada
+            Generación de constancia
           </p>
           <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">
-            Recepción de constancia por curso
+            Constancia por curso
           </h3>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-            El backend obtiene la identidad del docente desde la sesión JWT.
-          </p>
         </div>
         <button
           className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
@@ -211,7 +205,7 @@ export function CourseCertificateForm({
           ))}
         </FormSection>
 
-        <FormSection description="Sistema que origina la solicitud." title="Origen de la solicitud">
+        <FormSection description="Sistema que proporciona los datos de la constancia." title="Origen de la solicitud">
           {sourceFields.map((field) => (
             <TextField field={field} key={field.id} />
           ))}
@@ -229,8 +223,8 @@ export function CourseCertificateForm({
 
           {errorMessage ? (
             <FeedbackPanel
-              items={apiMissingFields.length > 0 ? apiMissingFields : undefined}
-              message={errorStatus ? `${errorMessage} (HTTP ${errorStatus})` : errorMessage}
+              items={apiMissingFields.length > 0 ? apiMissingFields.map((field) => FIELD_LABELS[field] ?? field) : undefined}
+              message={errorMessage}
               title="No se pudo generar la constancia"
               tone="error"
             />
@@ -239,9 +233,9 @@ export function CourseCertificateForm({
           {successResponse ? (
             <FeedbackPanel
               items={[
-                `ID: ${successResponse.generationId}`,
+                `Identificador de generación: ${successResponse.generationId}`,
                 `Versión: v${String(successResponse.version).padStart(3, "0")}`,
-                `Estado: ${successResponse.status}`,
+                `Estado: ${successResponse.status === "APROBADO" ? "Aprobado" : "Generado"}`,
               ]}
               message="Constancia generada correctamente."
               title="Generación exitosa"

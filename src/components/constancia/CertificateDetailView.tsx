@@ -61,7 +61,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
       if (error instanceof ConstanciaApiError) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("No se pudo conectar con el backend de constancias.");
+        setErrorMessage("No se pudo cargar la constancia. Inténtalo nuevamente.");
       }
       setCertificate(null);
     } finally {
@@ -154,7 +154,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
       <PanelMessage
         action={<BackLink href={backLink.href} label={backLink.label} />}
         eyebrow="Sin datos"
-        message="No hay metadata disponible para esta constancia."
+        message="No hay información disponible para esta constancia."
         title="Constancia no encontrada"
       />
     );
@@ -169,10 +169,10 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
               Documento generado
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">
-              Constancia {certificate.type}
+              {certificate.type === "CURSO" ? "Constancia por curso" : "Constancia semestral"}
             </h2>
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              Identificador interno:{" "}
+              Identificador de generación:{" "}
               <span className="font-semibold text-[var(--gold-soft)]">
                 {certificate.generationId}
               </span>
@@ -193,7 +193,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
       <section className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
         <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
           <div className="flex items-center justify-between gap-3 border-b border-[var(--border-soft)] pb-4">
-            <h3 className="text-lg font-semibold text-[var(--text)]">Metadata pública</h3>
+            <h3 className="text-lg font-semibold text-[var(--text)]">Información de la constancia</h3>
             <CertificateStatusBadge status={certificate.status} />
           </div>
 
@@ -217,7 +217,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
         <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
           <div className="flex flex-col gap-3 border-b border-[var(--border-soft)] pb-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-[var(--text)]">Vista previa PDF</h3>
+              <h3 className="text-lg font-semibold text-[var(--text)]">Vista previa del PDF</h3>
               <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
                 Si la vista previa no carga, el documento puede no estar disponible o el
                 navegador puede bloquear el visor integrado.
@@ -256,16 +256,16 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
 
 function buildDetailItems(certificate: CertificateGenerationDetail): DetailItem[] {
   return [
-    { label: "Tipo", value: certificate.type },
-    { label: "Estado", value: certificate.status },
+    { label: "Tipo", value: certificate.type === "CURSO" ? "Por curso" : "Semestral" },
+    { label: "Estado", value: certificate.status === "APROBADO" ? "Aprobado" : "Generado" },
     { label: "Versión", value: `v${String(certificate.version).padStart(3, "0")}` },
     { label: "Código docente", value: certificate.teacherCode },
     { label: "Código de curso", value: certificate.courseCode ?? "Constancia semestral" },
     { label: "Sección", value: certificate.section ?? "No aplica" },
     { label: "Semestre", value: certificate.semester },
     { label: "Fecha de generación", value: formatDateTimeInLima(certificate.generatedAt) },
-    { label: "Generation ID", value: certificate.generationId },
-    { label: "Certificate key", value: certificate.certificateKey },
+    { label: "Identificador de generación", value: certificate.generationId },
+    { label: "Clave de la constancia", value: certificate.certificateKey },
   ];
 }
 

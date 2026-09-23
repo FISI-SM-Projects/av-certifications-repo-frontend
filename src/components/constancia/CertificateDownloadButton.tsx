@@ -18,7 +18,7 @@ export function CertificateDownloadButton({
   generationId,
   scope = "self",
   className,
-  label = "Descargar",
+  label = "Descargar PDF",
 }: CertificateDownloadButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

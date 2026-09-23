@@ -94,7 +94,7 @@ export function SemesterCertificateForm({
     }
 
     if (hasMissingCourses) {
-      setValidationErrors(["Todos los cursos esperados deben estar encontrados en el listado actual."]);
+      setValidationErrors(["Todos los cursos deben tener una constancia por curso en el listado."]);
       return;
     }
 
@@ -118,7 +118,7 @@ export function SemesterCertificateForm({
         setErrorMessage(error.message);
         setMissingCourses(error.missingCourses);
       } else {
-        setErrorMessage("No se pudo conectar con el backend de constancias.");
+        setErrorMessage("No se pudo generar la constancia semestral. Inténtalo nuevamente.");
       }
     } finally {
       setIsSubmitting(false);
@@ -131,7 +131,7 @@ export function SemesterCertificateForm({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-              Consolidacion semestral
+              Consolidación semestral
             </p>
             <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">Constancia semestral</h3>
             <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
@@ -147,7 +147,7 @@ export function SemesterCertificateForm({
                   key={`chip-${row.id}`}
                 >
                   <span>{row.code || "Curso"}</span>
-                  <span className="text-[var(--muted)]">sec. {row.section || "-"}</span>
+                  <span className="text-[var(--muted)]">Sección {row.section || "-"}</span>
                   <span className={Boolean(status?.found) ? "text-[#b8f0c4]" : "text-[#f0b8b8]"}>
                     {Boolean(status?.found) ? "Encontrado" : "Faltante"}
                   </span>
@@ -177,9 +177,9 @@ export function SemesterCertificateForm({
         <div className="space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h4 className="text-base font-semibold text-[var(--text)]">Cursos esperados</h4>
+              <h4 className="text-base font-semibold text-[var(--text)]">Cursos de la constancia</h4>
               <p className="mt-1 text-sm text-[var(--muted)]">
-                El estado encontrado/faltante se calcula con el listado actual visible.
+                Cada curso debe tener una constancia por curso en el listado.
               </p>
             </div>
             <button
@@ -201,7 +201,7 @@ export function SemesterCertificateForm({
                 >
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[var(--text)]" htmlFor={`${row.id}-code`}>
-                      Codigo
+                      Código
                     </label>
                     <input
                       className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)]"
@@ -213,7 +213,7 @@ export function SemesterCertificateForm({
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[var(--text)]" htmlFor={`${row.id}-section`}>
-                      Seccion
+                      Sección
                     </label>
                     <input
                       className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)]"
@@ -246,7 +246,7 @@ export function SemesterCertificateForm({
         <div aria-live="polite" className="space-y-3">
           {semester.trim() === "" || hasIncompleteRows ? (
             <FeedbackPanel
-              message="Completa el semestre, el codigo y la seccion de cada curso esperado para continuar."
+              message="Completa el semestre, el código y la sección de cada curso para continuar."
               title="Datos pendientes"
               tone="warning"
             />
@@ -254,7 +254,7 @@ export function SemesterCertificateForm({
 
           {hasMissingCourses && !hasIncompleteRows && semester.trim() !== "" ? (
             <FeedbackPanel
-              message="Para generar la constancia semestral, todos los cursos esperados deben tener constancia por curso."
+              message="Para generar la constancia semestral, todos los cursos deben tener una constancia por curso."
               title="Hay cursos faltantes"
               tone="warning"
             />
@@ -271,7 +271,7 @@ export function SemesterCertificateForm({
 
           {errorMessage ? (
             <FeedbackPanel
-              items={missingCourses.map((course) => `${course.code}, seccion ${course.section}`)}
+              items={missingCourses.map((course) => `${course.code}, sección ${course.section}`)}
               message={errorMessage}
               title="No se pudo generar la constancia semestral"
               tone="error"
@@ -281,13 +281,13 @@ export function SemesterCertificateForm({
           {successResponse ? (
             <FeedbackPanel
               items={[
-                `ID: ${successResponse.generationId}`,
-                `Version: v${String(successResponse.version).padStart(3, "0")}`,
+                `Identificador de generación: ${successResponse.generationId}`,
+                `Versión: v${String(successResponse.version).padStart(3, "0")}`,
                 `Cursos: ${successResponse.courseCount}`,
-                `Estado: ${successResponse.status}`,
+                `Estado: ${successResponse.status === "APROBADO" ? "Aprobado" : "Generado"}`,
               ]}
               message="Constancia semestral generada correctamente."
-              title="Generacion exitosa"
+              title="Generación exitosa"
               tone="success"
             />
           ) : null}
@@ -338,15 +338,15 @@ function validateForm(
     errors.push("El semestre es obligatorio.");
   }
   if (rows.length === 0) {
-    errors.push("Debe existir al menos un curso esperado.");
+    errors.push("Agrega al menos un curso.");
   }
 
   rows.forEach((row, index) => {
     if (row.code.trim() === "") {
-      errors.push(`Curso ${index + 1}: el codigo es obligatorio.`);
+      errors.push(`Curso ${index + 1}: el código es obligatorio.`);
     }
     if (row.section.trim() === "") {
-      errors.push(`Curso ${index + 1}: la seccion es obligatoria.`);
+      errors.push(`Curso ${index + 1}: la sección es obligatoria.`);
     }
   });
 
