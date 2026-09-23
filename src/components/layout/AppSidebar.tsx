@@ -48,7 +48,7 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppSidebar() {
+export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { user, teacher, roles, isLoading, isAuthenticated } = useAuth();
   const isDemo = isDemoMode();
@@ -62,8 +62,8 @@ export function AppSidebar() {
     : [teacher.firstName, teacher.paternalLastName, teacher.maternalLastName].filter(Boolean).join(" ");
 
   return (
-    <aside className="flex min-h-screen w-full flex-col border-r border-[var(--border)] bg-[rgba(27,5,12,0.96)] text-sm text-[var(--text)] md:sticky md:top-0 md:w-64">
-      <div className="border-b border-[var(--border)] px-5 py-5">
+    <aside className="flex min-h-full w-full flex-col border-r border-[var(--border)] bg-[rgba(27,5,12,0.96)] text-sm text-[var(--text)] md:min-h-screen md:w-64">
+      <div className="border-b border-[var(--border)] py-5 pl-5 pr-14 md:pr-5">
         <div className="flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-md border border-[rgba(201,168,93,0.7)] bg-[var(--surface-soft)] text-xs font-bold text-[var(--gold-soft)] shadow-[0_0_0_3px_rgba(201,168,93,0.06)]">
             FISI
@@ -147,7 +147,7 @@ export function AppSidebar() {
               }
 
               return (
-                <Link className={itemClassName} href={item.href} key={item.href}>
+                <Link className={itemClassName} href={item.href} key={item.href} onClick={onNavigate}>
                   <span>{item.label}</span>
                   {isActive ? (
                     <span className="rounded-full bg-[var(--gold)] px-2 py-0.5 text-[11px] font-bold text-[#1b050c]">
