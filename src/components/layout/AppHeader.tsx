@@ -12,14 +12,18 @@ export type AppHeaderProps = {
 };
 
 export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeaderProps) {
-  const { user, teacher, isLoading, isAuthenticated } = useAuth();
-  const teacherName = teacher === null
-    ? null
-    : [teacher.firstName, teacher.paternalLastName, teacher.maternalLastName].filter(Boolean).join(" ");
+  const { user, isLoading, isAuthenticated } = useAuth();
   const isDemo = isDemoMode();
   const visibleBreadcrumb =
     isDemo || breadcrumb?.includes("Sprint") !== true ? breadcrumb : undefined;
   const visibleBadges = isDemo ? badges : [];
+  const sessionLabel = isLoading
+    ? "Cargando sesión"
+    : isAuthenticated && user !== null
+      ? `${user.fullName} · ${user.role}`
+      : !isAuthenticated
+        ? "Sin sesión"
+        : null;
 
   return (
     <header className="flex min-h-16 flex-col gap-3 border-b border-[var(--border)] bg-[rgba(59,10,24,0.92)] px-5 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
@@ -39,39 +43,30 @@ export function AppHeader({ breadcrumb, title, subtitle, badges = [] }: AppHeade
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {visibleBadges.map((badge) => (
-          <span
-            className="rounded-full border border-[var(--gold)] bg-[rgba(201,168,93,0.12)] px-3 py-1 text-xs font-semibold text-[var(--gold-soft)]"
-            key={badge}
-          >
-            {badge}
-          </span>
-        ))}
-        <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
-          {isLoading
-            ? "Cargando sesión"
-            : isAuthenticated && user !== null
-              ? `${user.fullName} · ${user.role}`
-              : isAuthenticated && teacherName !== null
-                ? `${teacherName} · DOCENTE`
-                : "Sin sesión"}
-        </span>
-        {user !== null ? (
-          <DemoOnly>
-            <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
-              Sesión simulada
+      {visibleBadges.length > 0 || sessionLabel !== null ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {visibleBadges.map((badge) => (
+            <span
+              className="rounded-full border border-[var(--gold)] bg-[rgba(201,168,93,0.12)] px-3 py-1 text-xs font-semibold text-[var(--gold-soft)]"
+              key={badge}
+            >
+              {badge}
             </span>
-          </DemoOnly>
-        ) : null}
-        <button
-          className="grid h-8 w-8 place-items-center rounded-md border border-[var(--border)] bg-[var(--surface-soft)] text-[var(--gold-soft)]"
-          type="button"
-          title="Tema institucional"
-        >
-          ●
-        </button>
-      </div>
+          ))}
+          {sessionLabel !== null ? (
+            <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+              {sessionLabel}
+            </span>
+          ) : null}
+          {user !== null ? (
+            <DemoOnly>
+              <span className="rounded-full border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
+                Sesión simulada
+              </span>
+            </DemoOnly>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }
