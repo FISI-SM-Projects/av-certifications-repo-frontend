@@ -42,7 +42,19 @@ export function CertificateSummaryTable({
         </p>
       </div>
 
-      <div className="w-full overflow-x-auto">
+      <div className="divide-y divide-[var(--border-soft)] md:hidden" data-testid="mobile-certificate-list">
+        {certificates.map((certificate) => (
+          <MobileCertificateCard
+            accessScope={accessScope}
+            certificate={certificate}
+            detailReturnTo={detailReturnTo}
+            key={certificate.generationId}
+            showTeacherCode={showTeacherCode}
+          />
+        ))}
+      </div>
+
+      <div className="hidden w-full overflow-x-auto md:block" data-testid="desktop-certificate-table">
         <table className="w-full min-w-[980px] table-fixed border-collapse text-left text-sm">
           <colgroup>
             <col className={showTeacherCode ? "w-[8%]" : "w-[9%]"} />
@@ -94,19 +106,11 @@ export function CertificateSummaryTable({
                   {formatDateTimeInLima(certificate.generatedAt)}
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-                    <Link
-                      className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md border border-[var(--border)] px-3 py-2 text-center text-xs font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-                      href={buildDetailHref(certificate.generationId, detailReturnTo)}
-                    >
-                      Ver detalle
-                    </Link>
-                    <CertificateDownloadButton
-                      className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md bg-[var(--gold)] px-3 py-2 text-center text-xs font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-                      generationId={certificate.generationId}
-                      scope={accessScope}
-                    />
-                  </div>
+                  <CertificateActions
+                    accessScope={accessScope}
+                    detailReturnTo={detailReturnTo}
+                    generationId={certificate.generationId}
+                  />
                 </td>
               </tr>
             ))}
@@ -114,6 +118,105 @@ export function CertificateSummaryTable({
         </table>
       </div>
     </section>
+  );
+}
+
+function MobileCertificateCard({
+  accessScope,
+  certificate,
+  detailReturnTo,
+  showTeacherCode,
+}: {
+  accessScope: CertificateAccessScope;
+  certificate: CertificateGenerationSummary;
+  detailReturnTo?: string;
+  showTeacherCode: boolean;
+}) {
+  const isCourseCertificate = certificate.type === "CURSO";
+  const title = isCourseCertificate
+    ? certificate.courseCode ?? "Constancia por curso"
+    : `Período ${certificate.semester}`;
+
+  return (
+    <article className="min-w-0 space-y-4 p-5">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
+            {isCourseCertificate ? "Constancia por curso" : "Constancia semestral"}
+          </p>
+          <h4 className="mt-2 break-words text-lg font-semibold text-[var(--text)]">
+            {title}
+          </h4>
+          {isCourseCertificate ? (
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Período {certificate.semester}
+              {certificate.section ? ` · Sección ${certificate.section}` : ""}
+            </p>
+          ) : null}
+        </div>
+        <CertificateStatusBadge status={certificate.status} />
+      </div>
+
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        {showTeacherCode ? (
+          <CertificateMetadata label="Código docente" value={certificate.teacherCode} />
+        ) : null}
+        <CertificateMetadata
+          label="Versión"
+          value={`v${String(certificate.version).padStart(3, "0")}`}
+        />
+        <CertificateMetadata label="Fecha" value={formatDateTimeInLima(certificate.generatedAt)} />
+      </dl>
+
+      <CertificateActions
+        accessScope={accessScope}
+        detailReturnTo={detailReturnTo}
+        generationId={certificate.generationId}
+        mobile
+      />
+    </article>
+  );
+}
+
+function CertificateMetadata({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs font-medium text-[var(--muted)]">{label}</dt>
+      <dd className="mt-1 break-words font-semibold text-[var(--text)]">{value}</dd>
+    </div>
+  );
+}
+
+function CertificateActions({
+  accessScope,
+  detailReturnTo,
+  generationId,
+  mobile = false,
+}: {
+  accessScope: CertificateAccessScope;
+  detailReturnTo?: string;
+  generationId: string;
+  mobile?: boolean;
+}) {
+  const containerClassName = mobile
+    ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
+    : "flex items-center gap-2 whitespace-nowrap";
+  const actionClassName = mobile ? "w-full" : "shrink-0";
+
+  return (
+    <div className={containerClassName}>
+      <Link
+        className={`inline-flex min-h-10 items-center justify-center rounded-md border border-[var(--border)] px-3 py-2 text-center text-xs font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] ${actionClassName}`}
+        href={buildDetailHref(generationId, detailReturnTo)}
+      >
+        Ver detalle
+      </Link>
+      <CertificateDownloadButton
+        className={`inline-flex min-h-10 items-center justify-center rounded-md bg-[var(--gold)] px-3 py-2 text-center text-xs font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] ${actionClassName}`}
+        generationId={generationId}
+        scope={accessScope}
+      />
+    </div>
   );
 }
 
