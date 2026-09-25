@@ -61,14 +61,14 @@ export function TeacherCertificatesView() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
             <button
-              className="min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              className="control-focus min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
               onClick={() => setIsCourseFormOpen(true)}
               type="button"
             >
               Generar por curso
             </button>
             <button
-              className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="control-focus min-h-10 rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-[var(--control-border)] disabled:hover:text-[var(--text)]"
               disabled={isLoading}
               onClick={loadCertificates}
               type="button"
@@ -103,7 +103,7 @@ export function TeacherCertificatesView() {
           message={errorMessage}
           action={
             <button
-              className="min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              className="control-focus min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
               onClick={loadCertificates}
               type="button"
             >

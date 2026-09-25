@@ -136,7 +136,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
         action={
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
-              className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              className="control-focus rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
               onClick={loadCertificate}
               type="button"
             >
@@ -224,7 +224,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
             </div>
             {pdfUrl ? (
               <a
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+                className="control-focus inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--control-border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
                 href={pdfUrl}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -308,7 +308,7 @@ type BackLinkConfig = {
 function BackLink({ href, label }: BackLinkConfig) {
   return (
     <Link
-      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+      className="control-focus inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--control-border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
       href={href}
     >
       {label}

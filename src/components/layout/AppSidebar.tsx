@@ -131,8 +131,8 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             {menuItems.map((item) => {
               const isActive = isActivePath(pathname, item.href);
               const itemClassName = isActive
-                ? "flex items-center justify-between rounded-md border border-[rgba(143,41,69,0.72)] bg-[var(--guinda)] px-3 py-2.5 font-medium text-[var(--text)] shadow-[inset_3px_0_0_var(--gold)]"
-                : "flex items-center justify-between rounded-md px-3 py-2.5 text-[var(--muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]";
+                ? "control-focus flex items-center justify-between rounded-md border border-[rgba(143,41,69,0.72)] bg-[var(--guinda)] px-3 py-2.5 font-medium text-[var(--text)] shadow-[inset_3px_0_0_var(--gold)]"
+                : "control-focus flex items-center justify-between rounded-md px-3 py-2.5 text-[var(--muted)] transition hover:bg-[var(--surface-soft)] hover:text-[var(--text)]";
 
               if (item.disabled) {
                 return (
@@ -162,7 +162,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <div className="mt-auto border-t border-[var(--border)] px-4 py-4">
-        {isAuthenticated ? <LogoutButton className="w-full rounded-md border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]" /> : null}
+        {isAuthenticated ? <LogoutButton className="w-full rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]" /> : null}
       </div>
     </aside>
   );

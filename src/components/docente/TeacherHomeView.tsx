@@ -195,7 +195,7 @@ function AuthenticatedTeacherHome() {
             </p>
             <Link
               href="/constancias"
-              className="mt-5 inline-flex rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
+              className="control-focus mt-5 inline-flex rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
             >
               Ir a mis constancias
             </Link>

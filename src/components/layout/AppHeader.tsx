@@ -45,7 +45,7 @@ export function AppHeader({
           aria-controls="app-navigation"
           aria-expanded={isMenuOpen}
           aria-label="Abrir menú de navegación"
-          className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] md:hidden"
+          className="control-focus mt-1 grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[var(--control-border)] bg-[var(--surface)] text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] md:hidden"
           onClick={onOpenMenu}
           ref={menuButtonRef}
           type="button"

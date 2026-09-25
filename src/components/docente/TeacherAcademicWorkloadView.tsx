@@ -60,7 +60,7 @@ export function TeacherAcademicWorkloadView() {
       <StatusPanel
         action={
           <button
-            className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+            className="control-focus rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
             onClick={() => setRetryKey((current) => current + 1)}
             type="button"
           >
@@ -166,7 +166,7 @@ export function TeacherAcademicWorkloadView() {
         </p>
         <div className="grid grid-cols-2 gap-2 sm:flex">
           <button
-            className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)] disabled:cursor-not-allowed disabled:border-[var(--border-soft)] disabled:bg-black/20 disabled:text-[var(--muted)] disabled:opacity-60 disabled:hover:border-[var(--border-soft)]"
+            className="control-focus rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] disabled:cursor-not-allowed disabled:border-[var(--border-soft)] disabled:bg-black/20 disabled:text-[var(--muted)] disabled:opacity-60 disabled:hover:border-[var(--border-soft)]"
             disabled={!hasPreviousPage}
             onClick={() => setPage(pagination.pageNumber - 1)}
             type="button"
@@ -174,7 +174,7 @@ export function TeacherAcademicWorkloadView() {
             Anterior
           </button>
           <button
-            className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)] disabled:cursor-not-allowed disabled:border-[var(--border-soft)] disabled:bg-black/20 disabled:text-[var(--muted)] disabled:opacity-60 disabled:hover:border-[var(--border-soft)]"
+            className="control-focus rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] disabled:cursor-not-allowed disabled:border-[var(--border-soft)] disabled:bg-black/20 disabled:text-[var(--muted)] disabled:opacity-60 disabled:hover:border-[var(--border-soft)]"
             disabled={!hasNextPage}
             onClick={() => setPage(pagination.pageNumber + 1)}
             type="button"

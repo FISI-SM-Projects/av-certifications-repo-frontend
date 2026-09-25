@@ -187,7 +187,7 @@ export function SemesterCertificateForm({
             Período académico
           </label>
           <select
-            className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="control-focus w-full rounded-md border border-[var(--control-border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] transition disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isLoadingWorkloads || workloadsError !== null || periodGroups.length === 0 || isSubmitting}
             id="academic-period"
             onChange={handlePeriodChange}
@@ -212,7 +212,7 @@ export function SemesterCertificateForm({
           <FeedbackPanel
             action={(
               <button
-                className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
+                className="control-focus rounded-md border border-[var(--control-border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
                 onClick={retryWorkloads}
                 type="button"
               >
@@ -229,7 +229,7 @@ export function SemesterCertificateForm({
           <FeedbackPanel
             action={(
               <button
-                className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
+                className="control-focus rounded-md border border-[var(--control-border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
                 onClick={() => void onRetryCertificates()}
                 type="button"
               >
@@ -333,7 +333,7 @@ export function SemesterCertificateForm({
 
         <div className="flex justify-end border-t border-[var(--border-soft)] pt-5">
           <button
-            className="min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            className="control-focus min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[var(--gold)] sm:w-auto"
             disabled={isSubmitting || !canGenerate}
             type="submit"
           >

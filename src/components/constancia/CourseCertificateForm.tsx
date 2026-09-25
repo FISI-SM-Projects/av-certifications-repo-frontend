@@ -157,7 +157,7 @@ export function CourseCertificateForm({
           </h3>
         </div>
         <button
-          className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+          className="control-focus rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
           onClick={onCancel}
           type="button"
         >
@@ -182,7 +182,7 @@ export function CourseCertificateForm({
               Curso
             </label>
             <select
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="control-focus w-full rounded-md border border-[var(--control-border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] transition disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isLoadingWorkloads || workloadsError !== null || workloads.length === 0}
               id="academic-workload"
               onChange={handleWorkloadChange}
@@ -207,7 +207,7 @@ export function CourseCertificateForm({
             <div className="mt-4 rounded-lg border border-[rgba(196,82,82,0.55)] bg-[rgba(196,82,82,0.12)] p-4">
               <p className="text-sm text-[var(--muted)]">{workloadsError}</p>
               <button
-                className="mt-3 rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
+                className="control-focus mt-3 rounded-md border border-[var(--control-border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
                 onClick={retryWorkloads}
                 type="button"
               >
@@ -262,7 +262,7 @@ export function CourseCertificateForm({
 
         <div className="flex flex-col gap-3 border-t border-[var(--border-soft)] pt-5 sm:flex-row sm:justify-end">
           <button
-            className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+            className="control-focus rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-[var(--control-border)] disabled:hover:text-[var(--text)]"
             disabled={isSubmitting}
             onClick={onCancel}
             type="button"
@@ -270,7 +270,7 @@ export function CourseCertificateForm({
             Cancelar
           </button>
           <button
-            className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="control-focus rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[var(--gold)]"
             disabled={isSubmitting || !canGenerate}
             type="submit"
           >

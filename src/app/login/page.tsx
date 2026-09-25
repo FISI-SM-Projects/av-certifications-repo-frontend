@@ -64,7 +64,7 @@ export default function LoginPage() {
             </label>
             <input
               autoComplete="username"
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--gold)]"
+              className="control-focus w-full rounded-md border border-[var(--control-border)] bg-[var(--surface-muted)] px-3 py-2 text-[var(--text)]"
               id="username"
               onChange={(event) => setUsername(event.target.value)}
               required
@@ -79,7 +79,7 @@ export default function LoginPage() {
             </label>
             <input
               autoComplete="current-password"
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-[var(--text)] outline-none focus:border-[var(--gold)]"
+              className="control-focus w-full rounded-md border border-[var(--control-border)] bg-[var(--surface-muted)] px-3 py-2 text-[var(--text)]"
               id="password"
               onChange={(event) => setPassword(event.target.value)}
               required
@@ -99,7 +99,7 @@ export default function LoginPage() {
           ) : null}
 
           <button
-            className="w-full rounded-md bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="control-focus w-full rounded-md bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[var(--gold)]"
             disabled={isSubmitting}
             type="submit"
           >

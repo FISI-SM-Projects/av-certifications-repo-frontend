@@ -107,7 +107,7 @@ export function AppShell({
       >
         <button
           aria-label="Cerrar menú de navegación"
-          className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-xl text-[var(--text)] md:hidden"
+          className="control-focus absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-md border border-[var(--control-border)] bg-[var(--surface)] text-xl text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] md:hidden"
           onClick={() => closeMenu()}
           ref={closeButtonRef}
           type="button"

@@ -206,7 +206,7 @@ function CertificateActions({
   return (
     <div className={containerClassName}>
       <Link
-        className={`inline-flex min-h-10 items-center justify-center rounded-md border border-[var(--border)] px-3 py-2 text-center text-xs font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] ${actionClassName}`}
+        className={`control-focus inline-flex min-h-10 items-center justify-center rounded-md border border-[var(--control-border)] px-3 py-2 text-center text-xs font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] ${actionClassName}`}
         href={buildDetailHref(generationId, detailReturnTo)}
       >
         Ver detalle

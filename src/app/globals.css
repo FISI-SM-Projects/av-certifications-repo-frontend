@@ -8,6 +8,8 @@
   --surface-muted: #310813;
   --border: #6e2038;
   --border-soft: #4a1222;
+  --control-border: #bc647c;
+  --focus-ring: #c9a85d;
   --guinda: #5a0f24;
   --guinda-deep: #3b0a18;
   --guinda-medium: #7a1833;
@@ -50,6 +52,12 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+.control-focus:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-color: var(--focus-ring) !important;
+  outline-offset: 2px;
 }
 
 ::selection {
