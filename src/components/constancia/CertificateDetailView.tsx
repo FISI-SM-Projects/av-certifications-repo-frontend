@@ -27,6 +27,9 @@ type DetailItem = {
   value: string;
 };
 
+const PDF_PREVIEW_HEIGHT =
+  "h-[46vh] min-h-[320px] sm:h-[55vh] sm:min-h-[400px] lg:h-[70vh] lg:min-h-[520px]";
+
 export function CertificateDetailView({ generationId, returnTo }: CertificateDetailViewProps) {
   const { roles } = useAuth();
   const normalizedGenerationId = generationId.trim();
@@ -178,7 +181,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
           <div className="flex flex-col gap-2 sm:flex-row">
             <BackLink href={backLink.href} label={backLink.label} />
             <CertificateDownloadButton
-              className="rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              className="min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] sm:w-auto"
               generationId={certificate.generationId}
               label="Descargar PDF"
               scope={accessScope}
@@ -188,7 +191,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
-        <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+        <article className="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
           <div className="border-b border-[var(--border-soft)] pb-4">
             <h3 className="text-lg font-semibold text-[var(--text)]">Información de la constancia</h3>
           </div>
@@ -210,18 +213,18 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
           </dl>
         </article>
 
-        <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+        <article className="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
           <div className="flex flex-col gap-3 border-b border-[var(--border-soft)] pb-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h3 className="text-lg font-semibold text-[var(--text)]">Vista previa del PDF</h3>
               <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-                Si la vista previa no carga, el documento puede no estar disponible o el
-                navegador puede bloquear el visor integrado.
+                Ábrelo en una pestaña nueva para verlo con más espacio y usar los controles del
+                navegador.
               </p>
             </div>
             {pdfUrl ? (
               <a
-                className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
                 href={pdfUrl}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -231,14 +234,18 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
             ) : null}
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-lg border border-[var(--border-soft)] bg-[#111]">
+          <div className="mt-4 min-w-0 overflow-hidden rounded-lg border border-[var(--border-soft)] bg-[#111]">
             {isPdfLoading ? (
-              <p className="p-6 text-sm text-[var(--muted)]">Cargando vista previa...</p>
+              <p
+                className={`${PDF_PREVIEW_HEIGHT} flex items-center justify-center p-6 text-sm text-[var(--muted)]`}
+              >
+                Cargando vista previa...
+              </p>
             ) : null}
             {pdfError ? <p className="p-6 text-sm text-[#f0b8b8]">{pdfError}</p> : null}
             {pdfUrl ? (
               <iframe
-                className="h-[70vh] min-h-[520px] w-full"
+                className={`${PDF_PREVIEW_HEIGHT} w-full`}
                 src={pdfUrl}
                 title={`Vista previa de ${certificate.generationId}`}
               />
@@ -301,7 +308,7 @@ type BackLinkConfig = {
 function BackLink({ href, label }: BackLinkConfig) {
   return (
     <Link
-      className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
       href={href}
     >
       {label}

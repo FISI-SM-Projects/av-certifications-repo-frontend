@@ -101,6 +101,22 @@ describe("CertificateDetailView", () => {
       "src",
       "blob:certificate-preview",
     );
+    expect(screen.getByTitle("Vista previa de GEN-01")).toHaveAttribute(
+      "title",
+      "Vista previa de GEN-01",
+    );
+    expect(screen.getByRole("link", { name: "Abrir PDF en nueva pestaña" })).toHaveAttribute(
+      "href",
+      "blob:certificate-preview",
+    );
+    expect(screen.getByRole("link", { name: "Abrir PDF en nueva pestaña" })).toHaveAttribute(
+      "target",
+      "_blank",
+    );
+    expect(screen.getByRole("link", { name: "Abrir PDF en nueva pestaña" })).toHaveAttribute(
+      "rel",
+      "noopener noreferrer",
+    );
     expect(screen.getByRole("button", { name: "Descargar PDF" })).toHaveAttribute(
       "data-generation-id",
       "GEN-01",
@@ -190,6 +206,38 @@ describe("CertificateDetailView", () => {
 
     expect(await screen.findByRole("heading", { name: "Constancia por curso" })).toBeInTheDocument();
     expect(mockedGetCertificate).toHaveBeenCalledTimes(2);
+  });
+
+  it("mantiene un espacio estable mientras carga la vista previa", async () => {
+    mockedGetPdf.mockReturnValue(new Promise(() => undefined));
+
+    render(<CertificateDetailView generationId="GEN-01" />);
+
+    const loadingMessage = await screen.findByText("Cargando vista previa...");
+    expect(loadingMessage).toHaveClass("h-[46vh]", "min-h-[320px]", "lg:min-h-[520px]");
+    expect(screen.queryByTitle("Vista previa de GEN-01")).not.toBeInTheDocument();
+  });
+
+  it("conserva las acciones disponibles si falla la vista previa", async () => {
+    mockedGetPdf.mockRejectedValue(new Error("pdf unavailable"));
+
+    render(<CertificateDetailView generationId="GEN-01" />);
+
+    expect(
+      await screen.findByText("No se pudo cargar la vista previa del PDF."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Volver a mis constancias" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Descargar PDF" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Abrir PDF en nueva pestaña" })).not.toBeInTheDocument();
+  });
+
+  it("revoca la URL del preview al desmontar", async () => {
+    const { unmount } = render(<CertificateDetailView generationId="GEN-01" />);
+
+    expect(await screen.findByTitle("Vista previa de GEN-01")).toBeInTheDocument();
+    unmount();
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:certificate-preview");
   });
 });
 
