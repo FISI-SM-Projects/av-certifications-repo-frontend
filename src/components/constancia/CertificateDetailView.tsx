@@ -119,8 +119,8 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
   }, [accessScope, certificate]);
 
   const detailItems = useMemo(
-    () => (certificate ? buildDetailItems(certificate) : []),
-    [certificate],
+    () => (certificate ? buildDetailItems(certificate, accessScope) : []),
+    [accessScope, certificate],
   );
 
   if (isLoading) {
@@ -168,15 +168,12 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
               Documento generado
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">
-              {certificate.type === "CURSO" ? "Constancia por curso" : "Constancia semestral"}
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              Identificador de generación:{" "}
-              <span className="font-semibold text-[var(--gold-soft)]">
-                {certificate.generationId}
-              </span>
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <h2 className="text-2xl font-semibold text-[var(--text)]">
+                {certificate.type === "CURSO" ? "Constancia por curso" : "Constancia semestral"}
+              </h2>
+              <CertificateStatusBadge status={certificate.status} />
+            </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <BackLink href={backLink.href} label={backLink.label} />
@@ -192,9 +189,8 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
         <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
-          <div className="flex items-center justify-between gap-3 border-b border-[var(--border-soft)] pb-4">
+          <div className="border-b border-[var(--border-soft)] pb-4">
             <h3 className="text-lg font-semibold text-[var(--text)]">Información de la constancia</h3>
-            <CertificateStatusBadge status={certificate.status} />
           </div>
 
           <dl className="mt-4 space-y-3">
@@ -254,19 +250,33 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
   );
 }
 
-function buildDetailItems(certificate: CertificateGenerationDetail): DetailItem[] {
-  return [
-    { label: "Tipo", value: certificate.type === "CURSO" ? "Por curso" : "Semestral" },
-    { label: "Estado", value: certificate.status === "APROBADO" ? "Aprobado" : "Generado" },
-    { label: "Versión", value: `v${String(certificate.version).padStart(3, "0")}` },
-    { label: "Código docente", value: certificate.teacherCode },
-    { label: "Código de curso", value: certificate.courseCode ?? "Constancia semestral" },
-    { label: "Sección", value: certificate.section ?? "No aplica" },
-    { label: "Semestre", value: certificate.semester },
+function buildDetailItems(
+  certificate: CertificateGenerationDetail,
+  accessScope: CertificateAccessScope,
+): DetailItem[] {
+  const items: DetailItem[] = [];
+
+  if (accessScope === "administrative") {
+    items.push({ label: "Código docente", value: certificate.teacherCode });
+  }
+
+  if (certificate.type === "CURSO") {
+    if (certificate.courseCode !== null) {
+      items.push({ label: "Código de curso", value: certificate.courseCode });
+    }
+
+    if (certificate.section !== null) {
+      items.push({ label: "Sección", value: certificate.section });
+    }
+  }
+
+  items.push(
+    { label: "Período", value: certificate.semester },
     { label: "Fecha de generación", value: formatDateTimeInLima(certificate.generatedAt) },
-    { label: "Identificador de generación", value: certificate.generationId },
-    { label: "Clave de la constancia", value: certificate.certificateKey },
-  ];
+    { label: "Versión", value: `v${String(certificate.version).padStart(3, "0")}` },
+  );
+
+  return items;
 }
 
 function CertificateStatusBadge({ status }: { status: EstadoConstancia }) {
