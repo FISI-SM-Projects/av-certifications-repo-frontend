@@ -198,13 +198,16 @@ export function CourseCertificateForm({
           </div>
 
           {isLoadingWorkloads ? (
-            <p aria-live="polite" className="mt-4 text-sm text-[var(--muted)]">
+            <p className="mt-4 text-sm text-[var(--muted)]" role="status">
               Cargando cursos asignados...
             </p>
           ) : null}
 
           {!isLoadingWorkloads && workloadsError !== null ? (
-            <div className="mt-4 rounded-lg border border-[rgba(196,82,82,0.55)] bg-[rgba(196,82,82,0.12)] p-4">
+            <div
+              className="mt-4 rounded-lg border border-[rgba(196,82,82,0.55)] bg-[rgba(196,82,82,0.12)] p-4"
+              role="alert"
+            >
               <p className="text-sm text-[var(--muted)]">{workloadsError}</p>
               <button
                 className="control-focus mt-3 rounded-md border border-[var(--control-border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
@@ -227,7 +230,7 @@ export function CourseCertificateForm({
           <WorkloadSummary workload={selectedWorkload} />
         ) : null}
 
-        <div aria-live="polite" className="space-y-3">
+        <div className="space-y-3">
           {selectedMissingFields.length > 0 ? (
             <FeedbackPanel
               items={selectedMissingFields.map((field) => FIELD_LABELS[field] ?? field)}
@@ -270,6 +273,7 @@ export function CourseCertificateForm({
             Cancelar
           </button>
           <button
+            aria-busy={isSubmitting}
             className="control-focus rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[var(--gold)]"
             disabled={isSubmitting || !canGenerate}
             type="submit"
@@ -367,7 +371,10 @@ function FeedbackPanel({
       : "border-[rgba(196,82,82,0.55)] bg-[rgba(196,82,82,0.12)]";
 
   return (
-    <div className={`rounded-lg border p-4 ${className}`}>
+    <div
+      className={`rounded-lg border p-4 ${className}`}
+      role={tone === "error" ? "alert" : "status"}
+    >
       <p className="text-sm font-semibold text-[var(--text)]">{title}</p>
       <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{message}</p>
       {items && items.length > 0 ? (

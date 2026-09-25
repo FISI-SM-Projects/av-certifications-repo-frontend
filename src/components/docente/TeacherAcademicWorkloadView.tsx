@@ -52,7 +52,7 @@ export function TeacherAcademicWorkloadView() {
   }, [page, retryKey]);
 
   if (isLoading) {
-    return <StatusPanel message="Cargando carga académica..." />;
+    return <StatusPanel message="Cargando carga académica..." role="status" />;
   }
 
   if (errorMessage !== null) {
@@ -68,6 +68,7 @@ export function TeacherAcademicWorkloadView() {
           </button>
         }
         message={errorMessage}
+        role="alert"
         title="Carga académica no disponible"
       />
     );
@@ -209,17 +210,18 @@ function WorkloadField({
 function StatusPanel({
   action,
   message,
+  role,
   title,
 }: {
   action?: ReactNode;
   message: string;
+  role?: "alert" | "status";
   title?: string;
 }) {
   return (
     <section
-      aria-live="polite"
       className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
-      role={title ? "alert" : "status"}
+      role={role}
     >
       {title ? <h2 className="text-xl font-semibold text-[var(--text)]">{title}</h2> : null}
       <p className={title ? "mt-2 text-sm text-[var(--muted)]" : "text-sm text-[var(--muted)]"}>

@@ -90,7 +90,6 @@ export default function LoginPage() {
 
           {errorMessage !== null ? (
             <p
-              aria-live="polite"
               className="rounded-md border border-red-900/50 bg-[var(--danger-soft)] p-3 text-sm text-red-100"
               role="alert"
             >

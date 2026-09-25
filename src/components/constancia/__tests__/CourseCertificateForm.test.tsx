@@ -47,6 +47,7 @@ describe("CourseCertificateForm", () => {
     render(<CourseCertificateForm onCancel={vi.fn()} onGenerated={vi.fn()} />);
 
     expect(screen.getAllByText("Cargando cursos asignados...")).toHaveLength(2);
+    expect(screen.getByRole("status")).toHaveTextContent("Cargando cursos asignados...");
     expect(screen.getByRole("combobox", { name: "Curso" })).toBeDisabled();
     expect(
       screen.getByRole("button", { name: "Generar constancia por curso" }),
@@ -104,6 +105,7 @@ describe("CourseCertificateForm", () => {
       /teacherCode|teacherId|personId/,
     );
     expect(onGenerated).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status")).toHaveTextContent("Constancia generada correctamente.");
   });
 
   it("muestra el error de carga y permite reintentar", async () => {
@@ -113,9 +115,9 @@ describe("CourseCertificateForm", () => {
 
     render(<CourseCertificateForm onCancel={vi.fn()} onGenerated={vi.fn()} />);
 
-    expect(
-      await screen.findByText("No se pudo cargar tu carga académica."),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "No se pudo cargar tu carga académica.",
+    );
     expect(
       screen.getByRole("button", { name: "Generar constancia por curso" }),
     ).toBeDisabled();
@@ -126,6 +128,23 @@ describe("CourseCertificateForm", () => {
       expect(screen.getByRole("combobox", { name: "Curso" })).toBeEnabled();
     });
     expect(mockedGetAllWorkloads).toHaveBeenCalledTimes(2);
+  });
+
+  it("anuncia un error de generación una sola vez", async () => {
+    mockedGenerate.mockRejectedValue(new Error("unavailable"));
+
+    render(<CourseCertificateForm onCancel={vi.fn()} onGenerated={vi.fn()} />);
+
+    const select = await screen.findByRole("combobox", { name: "Curso" });
+    await waitFor(() => expect(select).toBeEnabled());
+    fireEvent.change(select, { target: { value: "11" } });
+    fireEvent.click(screen.getByRole("button", { name: "Generar constancia por curso" }));
+
+    const alerts = await screen.findAllByRole("alert");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent(
+      "No se pudo generar la constancia. Inténtalo nuevamente.",
+    );
   });
 
   it("explica el estado vacío y mantiene la generación deshabilitada", async () => {

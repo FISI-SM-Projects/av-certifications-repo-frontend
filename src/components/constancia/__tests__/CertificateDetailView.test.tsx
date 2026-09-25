@@ -66,7 +66,7 @@ describe("CertificateDetailView", () => {
 
     render(<CertificateDetailView generationId=" GEN-01 " />);
 
-    expect(await screen.findByText("Cargando constancia...")).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent("Cargando constancia...");
     expect(mockedGetCertificate).toHaveBeenCalledWith("GEN-01", "self");
 
     resolveCertificate(courseCertificate());
@@ -198,9 +198,9 @@ describe("CertificateDetailView", () => {
 
     render(<CertificateDetailView generationId="GEN-01" />);
 
-    expect(
-      await screen.findByText("No se pudo cargar la constancia. Inténtalo nuevamente."),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "No se pudo cargar la constancia. Inténtalo nuevamente.",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
 
@@ -214,6 +214,7 @@ describe("CertificateDetailView", () => {
     render(<CertificateDetailView generationId="GEN-01" />);
 
     const loadingMessage = await screen.findByText("Cargando vista previa...");
+    expect(loadingMessage).toHaveAttribute("role", "status");
     expect(loadingMessage).toHaveClass("h-[46vh]", "min-h-[320px]", "lg:min-h-[520px]");
     expect(screen.queryByTitle("Vista previa de GEN-01")).not.toBeInTheDocument();
   });
@@ -223,9 +224,9 @@ describe("CertificateDetailView", () => {
 
     render(<CertificateDetailView generationId="GEN-01" />);
 
-    expect(
-      await screen.findByText("No se pudo cargar la vista previa del PDF."),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "No se pudo cargar la vista previa del PDF.",
+    );
     expect(screen.getByRole("link", { name: "Volver a mis constancias" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Descargar PDF" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Abrir PDF en nueva pestaña" })).not.toBeInTheDocument();

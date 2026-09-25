@@ -94,13 +94,14 @@ export function TeacherCertificatesView() {
         onRetryCertificates={loadCertificates}
       />
 
-      {isLoading ? <PanelMessage message="Cargando constancias..." /> : null}
+      {isLoading ? <PanelMessage message="Cargando constancias..." role="status" /> : null}
 
       {!isLoading && errorMessage !== null ? (
         <PanelMessage
           eyebrow="Consulta no disponible"
-          title="No se pudo cargar el listado de constancias"
           message={errorMessage}
+          role="alert"
+          title="No se pudo cargar el listado de constancias"
           action={
             <button
               className="control-focus min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
@@ -183,17 +184,18 @@ function PanelMessage({
   title,
   message,
   action,
+  role,
 }: {
   eyebrow?: string;
   title?: string;
   message: string;
   action?: ReactNode;
+  role?: "alert" | "status";
 }) {
   return (
     <section
-      aria-live="polite"
       className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
-      role={title ? "alert" : "status"}
+      role={role}
     >
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">

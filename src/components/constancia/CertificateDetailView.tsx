@@ -127,7 +127,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
   );
 
   if (isLoading) {
-    return <PanelMessage message="Cargando constancia..." />;
+    return <PanelMessage message="Cargando constancia..." role="status" />;
   }
 
   if (errorMessage !== null) {
@@ -147,6 +147,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
         }
         eyebrow="Detalle no disponible"
         message={errorMessage}
+        role="alert"
         title="No se pudo cargar la constancia"
       />
     );
@@ -238,11 +239,16 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
             {isPdfLoading ? (
               <p
                 className={`${PDF_PREVIEW_HEIGHT} flex items-center justify-center p-6 text-sm text-[var(--muted)]`}
+                role="status"
               >
                 Cargando vista previa...
               </p>
             ) : null}
-            {pdfError ? <p className="p-6 text-sm text-[#f0b8b8]">{pdfError}</p> : null}
+            {pdfError ? (
+              <p className="p-6 text-sm text-[#f0b8b8]" role="alert">
+                {pdfError}
+              </p>
+            ) : null}
             {pdfUrl ? (
               <iframe
                 className={`${PDF_PREVIEW_HEIGHT} w-full`}
@@ -377,15 +383,20 @@ function PanelMessage({
   action,
   eyebrow,
   message,
+  role,
   title,
 }: {
   action?: React.ReactNode;
   eyebrow?: string;
   message: string;
+  role?: "alert" | "status";
   title?: string;
 }) {
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+    <section
+      className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+      role={role}
+    >
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
           {eyebrow}

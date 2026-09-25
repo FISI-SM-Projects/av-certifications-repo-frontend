@@ -40,7 +40,9 @@ describe("LoginPage", () => {
     fireEvent.submit(getLoginForm());
 
     expect(authMocks.loginWithCredentials).not.toHaveBeenCalled();
-    expect(screen.getByRole("alert")).toHaveTextContent("Ingresa tu usuario y contraseña.");
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Ingresa tu usuario y contraseña.");
+    expect(alert).not.toHaveAttribute("aria-live");
   });
 
   it("redirige una sola vez despues de un login correcto", async () => {

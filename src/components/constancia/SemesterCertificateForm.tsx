@@ -203,7 +203,7 @@ export function SemesterCertificateForm({
         </div>
 
         {isLoading ? (
-          <p aria-live="polite" className="text-sm text-[var(--muted)]">
+          <p className="text-sm text-[var(--muted)]" role="status">
             Cargando información académica...
           </p>
         ) : null}
@@ -219,6 +219,7 @@ export function SemesterCertificateForm({
                 Reintentar
               </button>
             )}
+            announce="alert"
             message={workloadsError}
             title="Carga académica no disponible"
             tone="error"
@@ -236,6 +237,7 @@ export function SemesterCertificateForm({
                 Reintentar
               </button>
             )}
+            announce="alert"
             message="No se pudieron cargar tus constancias."
             title="Constancias no disponibles"
             tone="error"
@@ -269,7 +271,7 @@ export function SemesterCertificateForm({
                   Período {selectedPeriod.semesterCode}
                 </p>
               </div>
-              <p aria-live="polite" className="text-sm font-semibold text-[var(--text)]">
+              <p className="text-sm font-semibold text-[var(--text)]" role="status">
                 {availableCount} de {workloadStatuses.length} constancias disponibles
               </p>
             </div>
@@ -306,9 +308,10 @@ export function SemesterCertificateForm({
           </section>
         ) : null}
 
-        <div aria-live="polite" className="space-y-3">
+        <div className="space-y-3">
           {errorMessage ? (
             <FeedbackPanel
+              announce="alert"
               items={missingCourses.map((course) => `${course.code}, sección ${course.section}`)}
               message={errorMessage}
               title="No se pudo generar la constancia semestral"
@@ -318,6 +321,7 @@ export function SemesterCertificateForm({
 
           {successResponse ? (
             <FeedbackPanel
+              announce="status"
               items={[
                 `Identificador de generación: ${successResponse.generationId}`,
                 `Versión: v${String(successResponse.version).padStart(3, "0")}`,
@@ -333,6 +337,7 @@ export function SemesterCertificateForm({
 
         <div className="flex justify-end border-t border-[var(--border-soft)] pt-5">
           <button
+            aria-busy={isSubmitting}
             className="control-focus min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[var(--gold)] sm:w-auto"
             disabled={isSubmitting || !canGenerate}
             type="submit"
@@ -430,12 +435,14 @@ function SemesterCourseCard({
 
 function FeedbackPanel({
   action,
+  announce,
   items,
   message,
   title,
   tone,
 }: {
   action?: ReactNode;
+  announce?: "alert" | "status";
   items?: string[];
   message: string;
   title: string;
@@ -448,7 +455,7 @@ function FeedbackPanel({
   };
 
   return (
-    <div className={`rounded-lg border p-4 ${classNameByTone[tone]}`}>
+    <div className={`rounded-lg border p-4 ${classNameByTone[tone]}`} role={announce}>
       <p className="text-sm font-semibold text-[var(--text)]">{title}</p>
       <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{message}</p>
       {items && items.length > 0 ? (

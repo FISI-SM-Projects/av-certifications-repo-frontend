@@ -51,6 +51,7 @@ export function CertificateDownloadButton({
   return (
     <span className="inline-flex flex-col items-start gap-1">
       <button
+        aria-busy={isDownloading}
         className={`${className} control-focus disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[var(--gold)]`}
         disabled={isDownloading}
         onClick={handleDownload}

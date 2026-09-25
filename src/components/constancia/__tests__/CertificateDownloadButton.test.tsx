@@ -44,6 +44,7 @@ describe("CertificateDownloadButton", () => {
 
     const downloadingButton = await screen.findByRole("button", { name: "Descargando..." });
     expect(downloadingButton).toBeDisabled();
+    expect(downloadingButton).toHaveAttribute("aria-busy", "true");
     expect(downloadingButton).toHaveClass(
       "control-focus",
       "disabled:cursor-not-allowed",
@@ -55,9 +56,26 @@ describe("CertificateDownloadButton", () => {
     resolveDownload(new Blob(["pdf"], { type: "application/pdf" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Descargar PDF" })).toBeEnabled();
+      const downloadButton = screen.getByRole("button", { name: "Descargar PDF" });
+      expect(downloadButton).toBeEnabled();
+      expect(downloadButton).toHaveAttribute("aria-busy", "false");
     });
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:certificate-download");
+  });
+
+  it("expone el error de descarga como alert", async () => {
+    mockedDownload.mockRejectedValue(new Error("unavailable"));
+
+    render(
+      <CertificateDownloadButton
+        className="bg-[var(--gold)] hover:bg-[var(--gold-soft)]"
+        generationId="GEN-01"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Descargar PDF" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No se pudo descargar el PDF.");
   });
 });

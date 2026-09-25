@@ -48,6 +48,7 @@ describe("SemesterCertificateForm", () => {
     renderForm();
 
     expect(screen.getByText("Cargando información académica...")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Cargando información académica...");
     expect(screen.getByRole("combobox", { name: "Período académico" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Generar constancia semestral" })).toBeDisabled();
   });
@@ -98,6 +99,9 @@ describe("SemesterCertificateForm", () => {
     expect(await screen.findByText("1 de 2 constancias disponibles")).toBeInTheDocument();
     expect(screen.getAllByText("Disponible")).toHaveLength(1);
     expect(screen.getAllByText("Faltante")).toHaveLength(1);
+    expect(screen.getByText("Disponible")).not.toHaveAttribute("role");
+    expect(screen.getByText("Faltante")).not.toHaveAttribute("role");
+    expect(screen.getAllByRole("status")).toHaveLength(1);
   });
 
   it("genera el request desde las asignaciones sin identidad manual", async () => {
@@ -127,6 +131,9 @@ describe("SemesterCertificateForm", () => {
       /teacherCode|teacherId|personId/,
     );
     expect(onGenerated).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByRole("status")).toHaveLength(2);
+    expect(screen.getByText("Constancia semestral generada correctamente.").closest("[role='status']"))
+      .toBeInTheDocument();
   });
 
   it("conserva secciones distintas del mismo curso en el request", async () => {
@@ -163,7 +170,9 @@ describe("SemesterCertificateForm", () => {
 
     renderForm();
 
-    expect(await screen.findByText("No se pudo cargar tu carga académica.")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "No se pudo cargar tu carga académica.",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
 
     await waitFor(() => {
@@ -190,11 +199,34 @@ describe("SemesterCertificateForm", () => {
       onRetryCertificates,
     });
 
-    expect(await screen.findByText("No se pudieron cargar tus constancias.")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "No se pudieron cargar tus constancias.",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
 
     expect(onRetryCertificates).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Generar constancia semestral" })).toBeDisabled();
+  });
+
+  it("anuncia un error de generación sin convertir los estados por curso en alerts", async () => {
+    mockedGenerate.mockRejectedValue(new Error("unavailable"));
+    renderForm({
+      certificates: [
+        certificate("COURSE11", "1", "26.1"),
+        certificate("COURSE12", "2", "26.1"),
+      ],
+    });
+
+    const generateButton = screen.getByRole("button", { name: "Generar constancia semestral" });
+    await waitFor(() => expect(generateButton).toBeEnabled());
+    fireEvent.click(generateButton);
+
+    const alerts = await screen.findAllByRole("alert");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent(
+      "No se pudo generar la constancia semestral. Inténtalo nuevamente.",
+    );
+    expect(screen.getAllByText("Disponible")).toHaveLength(2);
   });
 });
 

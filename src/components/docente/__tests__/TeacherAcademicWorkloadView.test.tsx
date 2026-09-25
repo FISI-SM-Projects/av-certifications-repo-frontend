@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AcademicWorkloadResponse } from "@/types/docente/academicWorkload.types";
@@ -16,6 +16,27 @@ import { TeacherAcademicWorkloadView } from "@/components/docente/TeacherAcademi
 describe("TeacherAcademicWorkloadView", () => {
   beforeEach(() => {
     serviceMocks.getAuthenticatedTeacherCourses.mockReset();
+  });
+
+  it("expone loading como status y errores como alert", async () => {
+    let rejectRequest!: (reason?: unknown) => void;
+    serviceMocks.getAuthenticatedTeacherCourses.mockReturnValue(
+      new Promise((_, reject) => {
+        rejectRequest = reject;
+      }),
+    );
+
+    render(<TeacherAcademicWorkloadView />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Cargando carga académica...");
+
+    await act(async () => {
+      rejectRequest(new Error("unavailable"));
+    });
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("No se pudo cargar la carga académica.");
+    expect(alert).not.toHaveAttribute("aria-live");
   });
 
   it("muestra los datos prioritarios y secundarios con la paginación deshabilitada", async () => {
