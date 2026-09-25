@@ -16,7 +16,7 @@ type SummaryItem = {
 
 export function TeacherCertificatesView() {
   const [certificates, setCertificates] = useState<CertificateGenerationSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCourseFormOpen, setIsCourseFormOpen] = useState(false);
 
@@ -88,7 +88,10 @@ export function TeacherCertificatesView() {
 
       <SemesterCertificateForm
         certificates={certificates}
+        certificatesError={errorMessage}
+        certificatesLoading={isLoading}
         onGenerated={loadCertificates}
+        onRetryCertificates={loadCertificates}
       />
 
       {isLoading ? <PanelMessage message="Cargando constancias..." /> : null}

@@ -1,8 +1,16 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 
 import { generarConstanciaSemestral } from "@/services/constancia/constanciaService";
+import { getAllAuthenticatedTeacherCourses } from "@/services/docente/academicWorkloadService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type {
   CertificateGenerationSummary,
@@ -10,103 +18,129 @@ import type {
   SemesterCertificateRequest,
   SemesterCertificateResponse,
 } from "@/types/constancia/constancia.types";
-
-type ExpectedCourseFormRow = {
-  id: string;
-  code: string;
-  section: string;
-};
+import type { AcademicWorkload } from "@/types/docente/academicWorkload.types";
 
 type SemesterCertificateFormProps = {
   certificates: CertificateGenerationSummary[];
+  certificatesError: string | null;
+  certificatesLoading: boolean;
   onGenerated: () => Promise<void> | void;
+  onRetryCertificates: () => Promise<void> | void;
 };
 
-const INITIAL_ROWS: ExpectedCourseFormRow[] = [
-  { id: "course-1", code: "32BGNYGF", section: "1" },
-  { id: "course-2", code: "32SW001", section: "2" },
-];
+type AcademicPeriodGroup = {
+  id: number;
+  semesterCode: string;
+  workloads: AcademicWorkload[];
+};
 
 export function SemesterCertificateForm({
   certificates,
+  certificatesError,
+  certificatesLoading,
   onGenerated,
+  onRetryCertificates,
 }: SemesterCertificateFormProps) {
-  const [semester, setSemester] = useState("26.1");
-  const [rows, setRows] = useState<ExpectedCourseFormRow[]>(INITIAL_ROWS);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [workloads, setWorkloads] = useState<AcademicWorkload[]>([]);
+  const [selectedPeriodId, setSelectedPeriodId] = useState("");
+  const [isLoadingWorkloads, setIsLoadingWorkloads] = useState(true);
+  const [workloadsError, setWorkloadsError] = useState<string | null>(null);
+  const [workloadsRetry, setWorkloadsRetry] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [missingCourses, setMissingCourses] = useState<ExpectedCourseRequest[]>([]);
   const [successResponse, setSuccessResponse] = useState<SemesterCertificateResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const rowStatuses = useMemo(
-    () => rows.map((row) => ({ rowId: row.id, found: isCourseAvailable(row, semester, certificates) })),
-    [certificates, rows, semester],
+  const periodGroups = useMemo(() => groupWorkloadsByPeriod(workloads), [workloads]);
+  const selectedPeriod = periodGroups.find(
+    (period) => String(period.id) === selectedPeriodId,
+  ) ?? null;
+  const workloadStatuses = useMemo(
+    () => selectedPeriod?.workloads.map((workload) => ({
+      available: isCourseAvailable(workload, certificates),
+      workload,
+    })) ?? [],
+    [certificates, selectedPeriod],
   );
-  const hasMissingCourses = rowStatuses.some((status) => !status.found);
-  const hasIncompleteRows = rows.some((row) => row.code.trim() === "" || row.section.trim() === "");
-  const isSubmitDisabled =
-    isSubmitting
-    || semester.trim() === ""
-    || rows.length === 0
-    || hasIncompleteRows
-    || hasMissingCourses;
-  const rowGridClass = "md:grid-cols-[minmax(0,1fr)_minmax(0,0.7fr)_auto_auto]";
+  const availableCount = workloadStatuses.filter((status) => status.available).length;
+  const missingCount = workloadStatuses.length - availableCount;
+  const hasAllCertificates = workloadStatuses.length > 0 && missingCount === 0;
+  const isLoading = isLoadingWorkloads || certificatesLoading;
+  const canGenerate = selectedPeriod !== null
+    && hasAllCertificates
+    && !isLoading
+    && workloadsError === null
+    && certificatesError === null;
 
-  function updateRow(rowId: string, field: "code" | "section", value: string) {
-    setRows((currentRows) =>
-      currentRows.map((row) => (row.id === rowId ? { ...row, [field]: value } : row)),
-    );
+  useEffect(() => {
+    let isActive = true;
+    const controller = new AbortController();
+
+    void getAllAuthenticatedTeacherCourses(controller.signal)
+      .then((nextWorkloads) => {
+        if (!isActive) {
+          return;
+        }
+
+        const nextPeriods = groupWorkloadsByPeriod(nextWorkloads);
+        setWorkloads(nextWorkloads);
+        setSelectedPeriodId((currentPeriodId) => {
+          if (nextPeriods.length === 1) {
+            return String(nextPeriods[0].id);
+          }
+
+          return nextPeriods.some((period) => String(period.id) === currentPeriodId)
+            ? currentPeriodId
+            : "";
+        });
+      })
+      .catch(() => {
+        if (isActive) {
+          setWorkloads([]);
+          setSelectedPeriodId("");
+          setWorkloadsError("No se pudo cargar tu carga académica.");
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoadingWorkloads(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, [workloadsRetry]);
+
+  function handlePeriodChange(event: ChangeEvent<HTMLSelectElement>) {
+    setSelectedPeriodId(event.target.value);
+    setErrorMessage(null);
+    setMissingCourses([]);
+    setSuccessResponse(null);
   }
 
-  function addRow() {
-    setRows((currentRows) => [
-      ...currentRows,
-      { id: `course-${Date.now()}`, code: "", section: "" },
-    ]);
-  }
-
-  function removeRow(rowId: string) {
-    setRows((currentRows) => {
-      if (currentRows.length === 1) {
-        return currentRows;
-      }
-
-      return currentRows.filter((row) => row.id !== rowId);
-    });
+  function retryWorkloads() {
+    setIsLoadingWorkloads(true);
+    setWorkloadsError(null);
+    setWorkloadsRetry((retry) => retry + 1);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isSubmitting) {
+    if (isSubmitting || !canGenerate || selectedPeriod === null) {
       return;
     }
 
     setErrorMessage(null);
     setMissingCourses([]);
     setSuccessResponse(null);
-
-    const errors = validateForm(semester, rows);
-    if (errors.length > 0) {
-      setValidationErrors(errors);
-      return;
-    }
-
-    if (hasMissingCourses) {
-      setValidationErrors(["Todos los cursos deben tener una constancia por curso en el listado."]);
-      return;
-    }
-
-    setValidationErrors([]);
     setIsSubmitting(true);
 
     const request: SemesterCertificateRequest = {
-      semester,
-      expected_courses: rows.map((row) => ({
-        code: row.code,
-        section: row.section,
-      })),
+      semester: selectedPeriod.semesterCode,
+      expected_courses: buildExpectedCourses(selectedPeriod.workloads),
     };
 
     try {
@@ -125,150 +159,154 @@ export function SemesterCertificateForm({
     }
   }
 
+  const periodPlaceholder = isLoadingWorkloads
+    ? "Cargando períodos académicos..."
+    : workloadsError !== null
+      ? "Períodos no disponibles"
+      : periodGroups.length === 0
+        ? "Sin períodos académicos"
+        : periodGroups.length > 1
+          ? "Selecciona un período"
+          : periodGroups[0].semesterCode;
+
   return (
     <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
       <div className="border-b border-[var(--border-soft)] pb-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-              Consolidación semestral
-            </p>
-            <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">Constancia semestral</h3>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              Genera una constancia consolidada cuando todos los cursos tengan su constancia por curso.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 lg:max-w-md lg:justify-end">
-            {rows.map((row) => {
-              const status = rowStatuses.find((item) => item.rowId === row.id);
-              return (
-                <span
-                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] bg-[var(--surface-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--text)]"
-                  key={`chip-${row.id}`}
-                >
-                  <span>{row.code || "Curso"}</span>
-                  <span className="text-[var(--muted)]">Sección {row.section || "-"}</span>
-                  <span className={Boolean(status?.found) ? "text-[#b8f0c4]" : "text-[#f0b8b8]"}>
-                    {Boolean(status?.found) ? "Encontrado" : "Faltante"}
-                  </span>
-                </span>
-              );
-            })}
-          </div>
-        </div>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
+          Consolidación semestral
+        </p>
+        <h3 className="mt-2 text-xl font-semibold text-[var(--text)]">Constancia semestral</h3>
+        <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--muted)]">
+          Elige un período y revisa si todos sus cursos cuentan con una constancia por curso.
+        </p>
       </div>
 
       <form className="mt-5 space-y-5" onSubmit={handleSubmit}>
-        <div className="grid gap-4 md:max-w-md">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-[var(--text)]" htmlFor="semester-value">
-              Semestre
-            </label>
-            <input
-              className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)]"
-              id="semester-value"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => setSemester(event.target.value)}
-              type="text"
-              value={semester}
-            />
-          </div>
+        <div className="space-y-2 md:max-w-md">
+          <label className="text-sm font-semibold text-[var(--text)]" htmlFor="academic-period">
+            Período académico
+          </label>
+          <select
+            className="w-full rounded-md border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)] disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isLoadingWorkloads || workloadsError !== null || periodGroups.length === 0 || isSubmitting}
+            id="academic-period"
+            onChange={handlePeriodChange}
+            value={selectedPeriodId}
+          >
+            {selectedPeriodId === "" ? <option value="">{periodPlaceholder}</option> : null}
+            {periodGroups.map((period) => (
+              <option key={period.id} value={period.id}>
+                {period.semesterCode}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h4 className="text-base font-semibold text-[var(--text)]">Cursos de la constancia</h4>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                Cada curso debe tener una constancia por curso en el listado.
+        {isLoading ? (
+          <p aria-live="polite" className="text-sm text-[var(--muted)]">
+            Cargando información académica...
+          </p>
+        ) : null}
+
+        {!isLoadingWorkloads && workloadsError !== null ? (
+          <FeedbackPanel
+            action={(
+              <button
+                className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
+                onClick={retryWorkloads}
+                type="button"
+              >
+                Reintentar
+              </button>
+            )}
+            message={workloadsError}
+            title="Carga académica no disponible"
+            tone="error"
+          />
+        ) : null}
+
+        {!certificatesLoading && certificatesError !== null ? (
+          <FeedbackPanel
+            action={(
+              <button
+                className="rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)]"
+                onClick={() => void onRetryCertificates()}
+                type="button"
+              >
+                Reintentar
+              </button>
+            )}
+            message="No se pudieron cargar tus constancias."
+            title="Constancias no disponibles"
+            tone="error"
+          />
+        ) : null}
+
+        {!isLoadingWorkloads && workloadsError === null && workloads.length === 0 ? (
+          <FeedbackPanel
+            message="No tienes cursos asignados para generar una constancia semestral."
+            title="Sin carga académica"
+            tone="warning"
+          />
+        ) : null}
+
+        {!isLoading && selectedPeriod === null && periodGroups.length > 1 ? (
+          <FeedbackPanel
+            message="Selecciona un período académico para revisar sus cursos."
+            title="Período pendiente"
+            tone="warning"
+          />
+        ) : null}
+
+        {!isLoading && selectedPeriod !== null && certificatesError === null ? (
+          <section aria-labelledby="semester-courses-title" className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h4 className="text-base font-semibold text-[var(--text)]" id="semester-courses-title">
+                  Cursos asignados
+                </h4>
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  Período {selectedPeriod.semesterCode}
+                </p>
+              </div>
+              <p aria-live="polite" className="text-sm font-semibold text-[var(--text)]">
+                {availableCount} de {workloadStatuses.length} constancias disponibles
               </p>
             </div>
-            <button
-              className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-              onClick={addRow}
-              type="button"
-            >
-              Agregar curso
-            </button>
-          </div>
 
-          <div className="space-y-3">
-            {rows.map((row) => {
-              const status = rowStatuses.find((item) => item.rowId === row.id);
-              return (
-                <div
-                  className={`grid gap-3 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4 ${rowGridClass}`}
-                  key={row.id}
-                >
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[var(--text)]" htmlFor={`${row.id}-code`}>
-                      Código
-                    </label>
-                    <input
-                      className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)]"
-                      id={`${row.id}-code`}
-                      onChange={(event) => updateRow(row.id, "code", event.target.value)}
-                      type="text"
-                      value={row.code}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[var(--text)]" htmlFor={`${row.id}-section`}>
-                      Sección
-                    </label>
-                    <input
-                      className="w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--gold)]"
-                      id={`${row.id}-section`}
-                      onChange={(event) => updateRow(row.id, "section", event.target.value)}
-                      type="text"
-                      value={row.section}
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <SemesterCourseStatusBadge found={Boolean(status?.found)} />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      aria-label={`Eliminar curso esperado ${row.code || row.id}`}
-                      className="min-h-10 rounded-md border border-[var(--border)] px-3 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={rows.length === 1}
-                      onClick={() => removeRow(row.id)}
-                      type="button"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {workloadStatuses.map(({ available, workload }) => (
+                <SemesterCourseCard
+                  available={available}
+                  key={workload.id}
+                  workload={workload}
+                />
+              ))}
+            </div>
+
+            {workloadStatuses.length === 0 ? (
+              <FeedbackPanel
+                message="No tienes cursos asignados en este período."
+                title="Sin cursos"
+                tone="warning"
+              />
+            ) : missingCount > 0 ? (
+              <FeedbackPanel
+                message={`${missingCount === 1 ? "Falta" : "Faltan"} ${missingCount} ${missingCount === 1 ? "constancia por curso" : "constancias por curso"} para generar la constancia semestral.`}
+                title="Generación pendiente"
+                tone="warning"
+              />
+            ) : (
+              <FeedbackPanel
+                message="Todos los cursos del período cuentan con una constancia por curso."
+                title="Requisitos completos"
+                tone="success"
+              />
+            )}
+          </section>
+        ) : null}
 
         <div aria-live="polite" className="space-y-3">
-          {semester.trim() === "" || hasIncompleteRows ? (
-            <FeedbackPanel
-              message="Completa el semestre, el código y la sección de cada curso para continuar."
-              title="Datos pendientes"
-              tone="warning"
-            />
-          ) : null}
-
-          {hasMissingCourses && !hasIncompleteRows && semester.trim() !== "" ? (
-            <FeedbackPanel
-              message="Para generar la constancia semestral, todos los cursos deben tener una constancia por curso."
-              title="Hay cursos faltantes"
-              tone="warning"
-            />
-          ) : null}
-
-          {validationErrors.length > 0 ? (
-            <FeedbackPanel
-              items={validationErrors}
-              message="Revisa los datos antes de generar la constancia semestral."
-              title="Formulario incompleto"
-              tone="error"
-            />
-          ) : null}
-
           {errorMessage ? (
             <FeedbackPanel
               items={missingCourses.map((course) => `${course.code}, sección ${course.section}`)}
@@ -296,7 +334,7 @@ export function SemesterCertificateForm({
         <div className="flex justify-end border-t border-[var(--border-soft)] pt-5">
           <button
             className="min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-            disabled={isSubmitDisabled}
+            disabled={isSubmitting || !canGenerate}
             type="submit"
           >
             {isSubmitting ? "Generando constancia semestral..." : "Generar constancia semestral"}
@@ -307,70 +345,97 @@ export function SemesterCertificateForm({
   );
 }
 
-function isCourseAvailable(
-  row: ExpectedCourseFormRow,
-  semester: string,
-  certificates: CertificateGenerationSummary[],
-): boolean {
-  const code = row.code.trim();
-  const section = row.section.trim();
-  const normalizedSemester = semester.trim();
+function groupWorkloadsByPeriod(workloads: AcademicWorkload[]): AcademicPeriodGroup[] {
+  const periods = new Map<number, AcademicPeriodGroup>();
 
-  if (code === "" || section === "" || normalizedSemester === "") {
-    return false;
-  }
+  workloads.forEach((workload) => {
+    const periodId = workload.academicPeriod.id;
+    const period = periods.get(periodId);
 
-  return certificates.some((certificate) =>
-    certificate.type === "CURSO"
-    && certificate.semester === normalizedSemester
-    && certificate.courseCode === code
-    && certificate.section === section,
-  );
+    if (period) {
+      period.workloads.push(workload);
+      return;
+    }
+
+    periods.set(periodId, {
+      id: periodId,
+      semesterCode: workload.academicPeriod.semesterCode,
+      workloads: [workload],
+    });
+  });
+
+  return Array.from(periods.values());
 }
 
-function validateForm(
-  semester: string,
-  rows: ExpectedCourseFormRow[],
-): string[] {
-  const errors: string[] = [];
+function buildExpectedCourses(workloads: AcademicWorkload[]): ExpectedCourseRequest[] {
+  const expectedCourses = new Map<string, ExpectedCourseRequest>();
 
-  if (semester.trim() === "") {
-    errors.push("El semestre es obligatorio.");
-  }
-  if (rows.length === 0) {
-    errors.push("Agrega al menos un curso.");
-  }
+  workloads.forEach((workload) => {
+    const code = workload.course.code.trim();
+    const section = String(workload.section).trim();
+    const key = `${code.toUpperCase()}::${section.toUpperCase()}`;
 
-  rows.forEach((row, index) => {
-    if (row.code.trim() === "") {
-      errors.push(`Curso ${index + 1}: el código es obligatorio.`);
-    }
-    if (row.section.trim() === "") {
-      errors.push(`Curso ${index + 1}: la sección es obligatoria.`);
+    if (!expectedCourses.has(key)) {
+      expectedCourses.set(key, { code, section });
     }
   });
 
-  return errors;
+  return Array.from(expectedCourses.values());
 }
 
-function SemesterCourseStatusBadge({ found }: { found: boolean }) {
-  const className = found
+function isCourseAvailable(
+  workload: AcademicWorkload,
+  certificates: CertificateGenerationSummary[],
+): boolean {
+  return certificates.some((certificate) =>
+    certificate.type === "CURSO"
+    && certificate.semester === workload.academicPeriod.semesterCode
+    && certificate.courseCode === workload.course.code
+    && certificate.section === String(workload.section),
+  );
+}
+
+function SemesterCourseCard({
+  available,
+  workload,
+}: {
+  available: boolean;
+  workload: AcademicWorkload;
+}) {
+  const statusClassName = available
     ? "border-[rgba(79,155,97,0.55)] bg-[rgba(79,155,97,0.16)] text-[#b8f0c4]"
-    : "border-[rgba(196,82,82,0.55)] bg-[rgba(196,82,82,0.14)] text-[#f0b8b8]";
+    : "border-[rgba(201,168,93,0.55)] bg-[rgba(201,168,93,0.14)] text-[var(--gold-soft)]";
 
   return (
-    <span className={`inline-flex rounded-full border px-3 py-2 text-xs font-semibold ${className}`}>
-      {found ? "Encontrado" : "Faltante"}
-    </span>
+    <article className="min-w-0 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-soft)] p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gold-soft)]">
+            {workload.course.code}
+          </p>
+          <h5 className="mt-1 break-words text-sm font-semibold leading-6 text-[var(--text)]">
+            {workload.course.name}
+          </h5>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Sección {workload.section} · Ciclo {workload.cycle} · Plan {workload.plan} · {workload.school}
+          </p>
+        </div>
+        <span className={`inline-flex w-fit shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${statusClassName}`}>
+          {available ? "Disponible" : "Faltante"}
+        </span>
+      </div>
+    </article>
   );
 }
 
 function FeedbackPanel({
+  action,
   items,
   message,
   title,
   tone,
 }: {
+  action?: ReactNode;
   items?: string[];
   message: string;
   title: string;
@@ -393,6 +458,7 @@ function FeedbackPanel({
           ))}
         </ul>
       ) : null}
+      {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );
 }
