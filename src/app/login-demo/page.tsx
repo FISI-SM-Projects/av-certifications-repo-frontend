@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
+
 import { DemoLoginSelector } from "@/components/auth/DemoLoginSelector";
 import { DemoOnly } from "@/components/demo/DemoOnly";
 import { isDemoMode } from "@/lib/uiMode";
+
+export const metadata: Metadata = {
+  title: "Acceso de demostración",
+};
 
 export default function LoginDemoPage() {
   const isDemo = isDemoMode();

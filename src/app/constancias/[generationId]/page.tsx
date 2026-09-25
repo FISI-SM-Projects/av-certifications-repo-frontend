@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
+
 import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
 import { CertificateDetailView } from "@/components/constancia/CertificateDetailView";
+
+export const metadata: Metadata = {
+  title: "Detalle de constancia",
+};
 
 type CertificateDetailPageProps = {
   params: Promise<{

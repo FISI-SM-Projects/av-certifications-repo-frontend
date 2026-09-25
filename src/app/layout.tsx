@@ -4,8 +4,11 @@ import { Providers } from "@/app/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gestion Docente FISI",
-  description: "Sistema de Gestion Docente FISI",
+  title: {
+    default: "Sistema de Constancias FISI",
+    template: "%s | Sistema de Constancias FISI",
+  },
+  description: "Sistema de gestión y consulta de constancias docentes de la FISI.",
 };
 
 export default function RootLayout({

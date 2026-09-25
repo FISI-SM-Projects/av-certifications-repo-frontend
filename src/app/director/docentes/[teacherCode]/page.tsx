@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
+
 import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
 import { DirectorTeacherProfileView } from "@/components/director/DirectorTeacherProfileView";
+
+export const metadata: Metadata = {
+  title: "Perfil docente en consulta",
+};
 
 type DirectorDocentePerfilPageProps = {
   params: Promise<{
