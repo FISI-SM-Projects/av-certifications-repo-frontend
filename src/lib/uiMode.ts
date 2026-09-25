@@ -16,6 +16,13 @@ export function isDemoMode(): boolean {
   return getUiMode() === "demo";
 }
 
+export function isDemoAccessEnabled(
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+  uiMode: string | null | undefined = process.env.NEXT_PUBLIC_UI_MODE,
+): boolean {
+  return nodeEnv === "development" && uiMode?.trim().toLowerCase() === "demo";
+}
+
 function isUiMode(value: string | undefined): value is UiMode {
   return UI_MODE_VALUES.includes(value as UiMode);
 }

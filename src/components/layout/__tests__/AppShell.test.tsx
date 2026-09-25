@@ -7,7 +7,10 @@ vi.mock("@/context/auth/AuthProvider", () => ({
   useAuth: () => authMocks.useAuth(),
 }));
 
-vi.mock("@/lib/uiMode", () => ({ isDemoMode: () => false }));
+vi.mock("@/lib/uiMode", () => ({
+  isDemoAccessEnabled: () => false,
+  isDemoMode: () => false,
+}));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/perfil-docente",

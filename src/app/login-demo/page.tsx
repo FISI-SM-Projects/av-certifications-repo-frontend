@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { DemoLoginSelector } from "@/components/auth/DemoLoginSelector";
 import { DemoOnly } from "@/components/demo/DemoOnly";
-import { isDemoMode } from "@/lib/uiMode";
+import { isDemoAccessEnabled, isDemoMode } from "@/lib/uiMode";
 
 export const metadata: Metadata = {
   title: "Acceso de demostración",
 };
 
 export default function LoginDemoPage() {
+  if (!isDemoAccessEnabled()) {
+    redirect("/login");
+  }
+
   const isDemo = isDemoMode();
 
   return (
