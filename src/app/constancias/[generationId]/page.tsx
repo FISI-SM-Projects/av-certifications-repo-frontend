@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
+
 import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
 import { CertificateDetailView } from "@/components/constancia/CertificateDetailView";
+
+export const metadata: Metadata = {
+  title: "Detalle de constancia",
+};
 
 type CertificateDetailPageProps = {
   params: Promise<{
@@ -21,9 +27,8 @@ export default async function CertificateDetailPage({
   const returnTo = Array.isArray(query.returnTo) ? query.returnTo[0] : query.returnTo;
 
   return (
-    <RequireRole allowedRoles={["DOCENTE", "DIRECTOR", "ADMIN"]}>
+    <RequireRole allowedRoles={["DOCENTE", "DIRECTOR_ESCUELA", "DIRECTOR", "ADMIN"]}>
       <AppShell
-        badges={["Simulación Aula Virtual"]}
         breadcrumb="Sprint 3 > Docente > Constancias > Detalle"
         subtitle="Visualización y descarga del documento generado"
         title="Detalle de constancia"

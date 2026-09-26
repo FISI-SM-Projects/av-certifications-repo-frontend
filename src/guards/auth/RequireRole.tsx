@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
-import type { RolUsuario } from "@/types/auth/auth.types";
+import { isDemoAccessEnabled } from "@/lib/uiMode";
+import type { Role, RolUsuario } from "@/types/auth/auth.types";
 
 type RequireRoleProps = {
-  allowedRoles: RolUsuario[];
+  allowedRoles: Array<Role | RolUsuario>;
   children: ReactNode;
 };
 
@@ -26,7 +26,8 @@ function LoadingState() {
 }
 
 function UnauthorizedState() {
-  const isDemo = isDemoMode();
+  const { token } = useAuth();
+  const loginPath = token === null && isDemoAccessEnabled() ? "/login-demo" : "/login";
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4 text-[var(--text)]">
@@ -42,10 +43,10 @@ function UnauthorizedState() {
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/login-demo"
+            href={loginPath}
             className="rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
           >
-            {isDemo ? "Volver al login demo" : "Volver al acceso"}
+            {loginPath === "/login-demo" ? "Volver al login demo" : "Volver al acceso"}
           </Link>
           <LogoutButton />
         </div>
@@ -56,11 +57,11 @@ function UnauthorizedState() {
 
 export function RequireRole({ allowedRoles, children }: RequireRoleProps) {
   const router = useRouter();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, roles, isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace("/login-demo");
+      router.replace("/login");
     }
   }, [isLoading, isAuthenticated, router]);
 
@@ -68,11 +69,12 @@ export function RequireRole({ allowedRoles, children }: RequireRoleProps) {
     return <LoadingState />;
   }
 
-  if (!isAuthenticated || user === null) {
+  if (!isAuthenticated) {
     return <LoadingState />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  const activeRoles: Array<Role | RolUsuario> = user === null ? roles : [user.role];
+  if (!activeRoles.some((role) => allowedRoles.includes(role))) {
     return <UnauthorizedState />;
   }
 

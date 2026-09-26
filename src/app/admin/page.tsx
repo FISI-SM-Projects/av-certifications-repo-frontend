@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
+
 import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { isDemoMode } from "@/lib/uiMode";
+
+export const metadata: Metadata = {
+  title: "Administración",
+};
 
 export default function AdminPage() {
   const isDemo = isDemoMode();

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/context/auth/AuthProvider";
+import { isDemoAccessEnabled } from "@/lib/uiMode";
 
 type LogoutButtonProps = {
   className?: string;
@@ -10,11 +11,13 @@ type LogoutButtonProps = {
 
 export function LogoutButton({ className }: LogoutButtonProps) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, token, user } = useAuth();
 
   function handleLogout() {
+    const hasLegacySession = token === null && user !== null;
+    const loginPath = hasLegacySession && isDemoAccessEnabled() ? "/login-demo" : "/login";
     logout();
-    router.push("/login-demo");
+    router.push(loginPath);
   }
 
   return (
@@ -22,8 +25,8 @@ export function LogoutButton({ className }: LogoutButtonProps) {
       type="button"
       onClick={handleLogout}
       className={
-        className ??
-        "rounded-md border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+        `${className ??
+          "rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-medium text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"} control-focus`
       }
     >
       Cerrar sesión

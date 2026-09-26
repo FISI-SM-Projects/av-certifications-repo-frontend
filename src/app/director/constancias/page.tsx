@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
+
 import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
 import { DepartmentCertificatesPlaceholder } from "@/components/director/DepartmentCertificatesPlaceholder";
+
+export const metadata: Metadata = {
+  title: "Constancias del departamento",
+};
 
 export default function DirectorConstanciasPage() {
   return (

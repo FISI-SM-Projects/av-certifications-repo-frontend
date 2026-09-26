@@ -2,12 +2,6 @@ export type TipoConstancia = "CURSO" | "SEMESTRAL";
 
 export type EstadoConstancia = "GENERADO" | "APROBADO";
 
-export type TeacherPayload = {
-  full_name: string;
-  email: string;
-  teacher_code: string;
-};
-
 export type CoursePayload = {
   code: string;
   subject: string;
@@ -18,16 +12,9 @@ export type CoursePayload = {
   semester: string;
 };
 
-export type IssuerPayload = {
-  system: string;
-  executed_by_userid: string;
-  executed_by_email: string;
-};
-
 export type CourseCertificateRequest = {
-  teacher: TeacherPayload;
   course: CoursePayload;
-  issuer: IssuerPayload;
+  source_system: string;
 };
 
 export type ExpectedCourseRequest = {
@@ -36,7 +23,6 @@ export type ExpectedCourseRequest = {
 };
 
 export type SemesterCertificateRequest = {
-  teacher_code: string;
   semester: string;
   expected_courses: ExpectedCourseRequest[];
 };

@@ -14,8 +14,8 @@ import {
 import type { PerfilDocenteResponse } from "@/types/docente/perfilDocente.types";
 
 export function TeacherProfileView() {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const teacherCode = user?.teacherCode?.trim() ?? "";
+  const { user, teacher, isLoading: isAuthLoading } = useAuth();
+  const teacherCode = teacher === null ? user?.teacherCode?.trim() ?? "" : "";
   const [perfil, setPerfil] = useState<PerfilDocenteResponse | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export function TeacherProfileView() {
       if (error instanceof PerfilDocenteApiError) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("No se pudo conectar con el backend.");
+        setErrorMessage("No se pudo cargar el perfil docente. Inténtalo nuevamente.");
       }
       setPerfil(null);
     } finally {
@@ -58,15 +58,24 @@ export function TeacherProfileView() {
   }, [cargarPerfil, isAuthLoading, teacherCode]);
 
   if (isAuthLoading) {
-    return <PanelMessage message="Verificando sesion..." />;
+    return <PanelMessage message="Verificando sesión..." />;
+  }
+
+  if (teacher !== null) {
+    return (
+      <div className="space-y-5">
+        <PerfilDocenteHeader docente={teacher} />
+        <DatosDocenteCard docente={teacher} />
+      </div>
+    );
   }
 
   if (teacherCode === "") {
     return (
       <PanelMessage
-        eyebrow="Sesion sin codigo docente"
-        message="La consulta del perfil docente requiere que la sesion tenga un teacherCode."
-        title="La sesion actual no tiene un codigo docente asociado."
+        eyebrow="Perfil no disponible"
+        message="No se encontró un perfil docente asociado a esta sesión."
+        title="No se pudo mostrar el perfil docente"
       />
     );
   }
@@ -106,7 +115,7 @@ export function TeacherProfileView() {
       <ConstanciasTable
         constancias={perfil.constancias}
         detailReturnTo="/perfil-docente"
-        emptyMessage="Aun no tienes constancias generadas."
+        emptyMessage="Aún no tienes constancias generadas."
       />
     </div>
   );

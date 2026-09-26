@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
+
 import { RequireRole } from "@/guards/auth/RequireRole";
 import { AppShell } from "@/components/layout/AppShell";
 import { DepartmentTeachersTable } from "@/components/director/DepartmentTeachersTable";
+
+export const metadata: Metadata = {
+  title: "Docentes del departamento",
+};
 
 export default function DirectorDocentesPage() {
   return (

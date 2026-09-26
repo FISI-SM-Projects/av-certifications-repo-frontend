@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { CertificateDownloadButton } from "@/components/constancia/CertificateDownloadButton";
 import { useAuth } from "@/context/auth/AuthProvider";
 import {
-  construirUrlDescargaPdf,
-  construirUrlVisualizacionPdf,
+  obtenerPdfConstancia,
   obtenerConstanciaPorGeneracion,
+  type CertificateAccessScope,
 } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type {
@@ -26,13 +27,25 @@ type DetailItem = {
   value: string;
 };
 
+const PDF_PREVIEW_HEIGHT =
+  "h-[46vh] min-h-[320px] sm:h-[55vh] sm:min-h-[400px] lg:h-[70vh] lg:min-h-[520px]";
+
 export function CertificateDetailView({ generationId, returnTo }: CertificateDetailViewProps) {
-  const { user } = useAuth();
+  const { roles } = useAuth();
   const normalizedGenerationId = generationId.trim();
+  const accessScope: CertificateAccessScope = roles.includes("DOCENTE")
+    ? "self"
+    : "administrative";
   const [certificate, setCertificate] = useState<CertificateGenerationDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const backLink = useMemo(() => buildBackLink(returnTo, user?.role), [returnTo, user?.role]);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const backLink = useMemo(
+    () => buildBackLink(returnTo, roles.includes("DIRECTOR_ESCUELA")),
+    [returnTo, roles],
+  );
 
   const loadCertificate = useCallback(async () => {
     if (normalizedGenerationId === "") {
@@ -45,19 +58,19 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
     setErrorMessage(null);
 
     try {
-      const data = await obtenerConstanciaPorGeneracion(normalizedGenerationId);
+      const data = await obtenerConstanciaPorGeneracion(normalizedGenerationId, accessScope);
       setCertificate(data);
     } catch (error) {
       if (error instanceof ConstanciaApiError) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("No se pudo conectar con el backend de constancias.");
+        setErrorMessage("No se pudo cargar la constancia. Inténtalo nuevamente.");
       }
       setCertificate(null);
     } finally {
       setIsLoading(false);
     }
-  }, [normalizedGenerationId]);
+  }, [accessScope, normalizedGenerationId]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -67,21 +80,54 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
     return () => clearTimeout(timeoutId);
   }, [loadCertificate]);
 
-  const pdfUrl = useMemo(
-    () => (certificate ? construirUrlVisualizacionPdf(certificate.generationId) : null),
-    [certificate],
-  );
-  const downloadUrl = useMemo(
-    () => (certificate ? construirUrlDescargaPdf(certificate.generationId) : null),
-    [certificate],
-  );
+  useEffect(() => {
+    if (certificate === null) {
+      return undefined;
+    }
+
+    let objectUrl: string | null = null;
+    let isActive = true;
+    const timeoutId = setTimeout(() => {
+      setIsPdfLoading(true);
+      setPdfError(null);
+
+      void obtenerPdfConstancia(certificate.generationId, accessScope)
+        .then((blob) => {
+          if (!isActive) {
+            return;
+          }
+          objectUrl = URL.createObjectURL(blob);
+          setPdfUrl(objectUrl);
+        })
+        .catch(() => {
+          if (isActive) {
+            setPdfError("No se pudo cargar la vista previa del PDF.");
+            setPdfUrl(null);
+          }
+        })
+        .finally(() => {
+          if (isActive) {
+            setIsPdfLoading(false);
+          }
+        });
+    }, 0);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeoutId);
+      if (objectUrl !== null) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [accessScope, certificate]);
+
   const detailItems = useMemo(
-    () => (certificate ? buildDetailItems(certificate) : []),
-    [certificate],
+    () => (certificate ? buildDetailItems(certificate, accessScope) : []),
+    [accessScope, certificate],
   );
 
   if (isLoading) {
-    return <PanelMessage message="Cargando constancia..." />;
+    return <PanelMessage message="Cargando constancia..." role="status" />;
   }
 
   if (errorMessage !== null) {
@@ -90,7 +136,7 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
         action={
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
-              className="rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              className="control-focus rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
               onClick={loadCertificate}
               type="button"
             >
@@ -101,17 +147,18 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
         }
         eyebrow="Detalle no disponible"
         message={errorMessage}
+        role="alert"
         title="No se pudo cargar la constancia"
       />
     );
   }
 
-  if (certificate === null || pdfUrl === null || downloadUrl === null) {
+  if (certificate === null) {
     return (
       <PanelMessage
         action={<BackLink href={backLink.href} label={backLink.label} />}
         eyebrow="Sin datos"
-        message="No hay metadata disponible para esta constancia."
+        message="No hay información disponible para esta constancia."
         title="Constancia no encontrada"
       />
     );
@@ -125,34 +172,29 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
               Documento generado
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-[var(--text)]">
-              Constancia {certificate.type}
-            </h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              Identificador interno:{" "}
-              <span className="font-semibold text-[var(--gold-soft)]">
-                {certificate.generationId}
-              </span>
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <h2 className="text-2xl font-semibold text-[var(--text)]">
+                {certificate.type === "CURSO" ? "Constancia por curso" : "Constancia semestral"}
+              </h2>
+              <CertificateStatusBadge status={certificate.status} />
+            </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <BackLink href={backLink.href} label={backLink.label} />
-            <a
-              className="rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-              download
-              href={downloadUrl}
-            >
-              Descargar PDF
-            </a>
+            <CertificateDownloadButton
+              className="min-h-11 w-full rounded-md bg-[var(--gold)] px-4 py-2 text-center text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)] sm:w-auto"
+              generationId={certificate.generationId}
+              label="Descargar PDF"
+              scope={accessScope}
+            />
           </div>
         </div>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
-        <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
-          <div className="flex items-center justify-between gap-3 border-b border-[var(--border-soft)] pb-4">
-            <h3 className="text-lg font-semibold text-[var(--text)]">Metadata pública</h3>
-            <CertificateStatusBadge status={certificate.status} />
+        <article className="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+          <div className="border-b border-[var(--border-soft)] pb-4">
+            <h3 className="text-lg font-semibold text-[var(--text)]">Información de la constancia</h3>
           </div>
 
           <dl className="mt-4 space-y-3">
@@ -172,31 +214,48 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
           </dl>
         </article>
 
-        <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+        <article className="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
           <div className="flex flex-col gap-3 border-b border-[var(--border-soft)] pb-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-[var(--text)]">Vista previa PDF</h3>
+              <h3 className="text-lg font-semibold text-[var(--text)]">Vista previa del PDF</h3>
               <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-                Si la vista previa no carga, el documento puede no estar disponible o el
-                navegador puede bloquear el visor integrado.
+                Ábrelo en una pestaña nueva para verlo con más espacio y usar los controles del
+                navegador.
               </p>
             </div>
-            <a
-              className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
-              href={pdfUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              Abrir PDF en nueva pestaña
-            </a>
+            {pdfUrl ? (
+              <a
+                className="control-focus inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--control-border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+                href={pdfUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Abrir PDF en nueva pestaña
+              </a>
+            ) : null}
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-lg border border-[var(--border-soft)] bg-[#111]">
-            <iframe
-              className="h-[70vh] min-h-[520px] w-full"
-              src={pdfUrl}
-              title={`Vista previa de ${certificate.generationId}`}
-            />
+          <div className="mt-4 min-w-0 overflow-hidden rounded-lg border border-[var(--border-soft)] bg-[#111]">
+            {isPdfLoading ? (
+              <p
+                className={`${PDF_PREVIEW_HEIGHT} flex items-center justify-center p-6 text-sm text-[var(--muted)]`}
+                role="status"
+              >
+                Cargando vista previa...
+              </p>
+            ) : null}
+            {pdfError ? (
+              <p className="p-6 text-sm text-[#f0b8b8]" role="alert">
+                {pdfError}
+              </p>
+            ) : null}
+            {pdfUrl ? (
+              <iframe
+                className={`${PDF_PREVIEW_HEIGHT} w-full`}
+                src={pdfUrl}
+                title={`Vista previa de ${certificate.generationId}`}
+              />
+            ) : null}
           </div>
         </article>
       </section>
@@ -204,19 +263,33 @@ export function CertificateDetailView({ generationId, returnTo }: CertificateDet
   );
 }
 
-function buildDetailItems(certificate: CertificateGenerationDetail): DetailItem[] {
-  return [
-    { label: "Tipo", value: certificate.type },
-    { label: "Estado", value: certificate.status },
-    { label: "Versión", value: `v${String(certificate.version).padStart(3, "0")}` },
-    { label: "Código docente", value: certificate.teacherCode },
-    { label: "Código de curso", value: certificate.courseCode ?? "Constancia semestral" },
-    { label: "Sección", value: certificate.section ?? "No aplica" },
-    { label: "Semestre", value: certificate.semester },
+function buildDetailItems(
+  certificate: CertificateGenerationDetail,
+  accessScope: CertificateAccessScope,
+): DetailItem[] {
+  const items: DetailItem[] = [];
+
+  if (accessScope === "administrative") {
+    items.push({ label: "Código docente", value: certificate.teacherCode });
+  }
+
+  if (certificate.type === "CURSO") {
+    if (certificate.courseCode !== null) {
+      items.push({ label: "Código de curso", value: certificate.courseCode });
+    }
+
+    if (certificate.section !== null) {
+      items.push({ label: "Sección", value: certificate.section });
+    }
+  }
+
+  items.push(
+    { label: "Período", value: certificate.semester },
     { label: "Fecha de generación", value: formatDateTimeInLima(certificate.generatedAt) },
-    { label: "Generation ID", value: certificate.generationId },
-    { label: "Certificate key", value: certificate.certificateKey },
-  ];
+    { label: "Versión", value: `v${String(certificate.version).padStart(3, "0")}` },
+  );
+
+  return items;
 }
 
 function CertificateStatusBadge({ status }: { status: EstadoConstancia }) {
@@ -241,7 +314,7 @@ type BackLinkConfig = {
 function BackLink({ href, label }: BackLinkConfig) {
   return (
     <Link
-      className="rounded-md border border-[var(--border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
+      className="control-focus inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--control-border)] px-4 py-2 text-center text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)]"
       href={href}
     >
       {label}
@@ -249,7 +322,7 @@ function BackLink({ href, label }: BackLinkConfig) {
   );
 }
 
-function buildBackLink(returnTo: string | undefined, role: string | undefined): BackLinkConfig {
+function buildBackLink(returnTo: string | undefined, isDirector: boolean): BackLinkConfig {
   const validatedReturnTo = validateReturnTo(returnTo);
 
   if (validatedReturnTo === "/constancias") {
@@ -264,7 +337,7 @@ function buildBackLink(returnTo: string | undefined, role: string | undefined): 
     return { href: validatedReturnTo, label: "Volver al perfil del docente" };
   }
 
-  if (role === "DIRECTOR") {
+  if (isDirector) {
     return { href: "/director/docentes", label: "Volver al listado de docentes" };
   }
 
@@ -310,15 +383,20 @@ function PanelMessage({
   action,
   eyebrow,
   message,
+  role,
   title,
 }: {
   action?: React.ReactNode;
   eyebrow?: string;
   message: string;
+  role?: "alert" | "status";
   title?: string;
 }) {
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+    <section
+      className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+      role={role}
+    >
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
           {eyebrow}

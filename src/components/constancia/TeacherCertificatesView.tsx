@@ -3,15 +3,11 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { CertificateSummaryTable } from "@/components/constancia/CertificateSummaryTable";
-import { SemesterCertificateSimulationForm } from "@/components/constancia/SemesterCertificateSimulationForm";
-import { DemoOnly } from "@/components/demo/DemoOnly";
-import { CourseCertificateSimulationForm } from "@/components/demo/constancia/CourseCertificateSimulationForm";
-import { useAuth } from "@/context/auth/AuthProvider";
-import { isDemoMode } from "@/lib/uiMode";
+import { CourseCertificateForm } from "@/components/constancia/CourseCertificateForm";
+import { SemesterCertificateForm } from "@/components/constancia/SemesterCertificateForm";
 import { listarConstanciasDocente } from "@/services/constancia/constanciaService";
 import { ConstanciaApiError } from "@/types/constancia/constancia-error.types";
 import type { CertificateGenerationSummary } from "@/types/constancia/constancia.types";
-import { obtenerTeacherCodeDeSesion } from "@/utils/constancia/sessionTeacher";
 
 type SummaryItem = {
   label: string;
@@ -19,98 +15,60 @@ type SummaryItem = {
 };
 
 export function TeacherCertificatesView() {
-  const { user, isLoading: isAuthLoading } = useAuth();
-  const isDemo = isDemoMode();
-  const teacherCode = obtenerTeacherCodeDeSesion(user);
   const [certificates, setCertificates] = useState<CertificateGenerationSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSimulationFormOpen, setIsSimulationFormOpen] = useState(false);
+  const [isCourseFormOpen, setIsCourseFormOpen] = useState(false);
 
   const loadCertificates = useCallback(async () => {
-    if (teacherCode === null) {
-      setCertificates([]);
-      setErrorMessage(null);
-      return;
-    }
-
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      const data = await listarConstanciasDocente(teacherCode);
+      const data = await listarConstanciasDocente();
       setCertificates(data);
     } catch (error) {
       if (error instanceof ConstanciaApiError) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("No se pudo conectar con el backend de constancias.");
+        setErrorMessage("No se pudieron cargar las constancias. Inténtalo nuevamente.");
       }
       setCertificates([]);
     } finally {
       setIsLoading(false);
     }
-  }, [teacherCode]);
+  }, []);
 
   useEffect(() => {
-    if (!isAuthLoading) {
-      const timeoutId = setTimeout(() => {
-        void loadCertificates();
-      }, 0);
+    const timeoutId = setTimeout(() => {
+      void loadCertificates();
+    }, 0);
 
-      return () => clearTimeout(timeoutId);
-    }
-
-    return undefined;
-  }, [isAuthLoading, loadCertificates]);
+    return () => clearTimeout(timeoutId);
+  }, [loadCertificates]);
 
   const summary = useMemo(() => buildSummary(certificates), [certificates]);
-
-  if (isAuthLoading) {
-    return <PanelMessage message="Verificando sesion..." />;
-  }
-
-  if (teacherCode === null || user === null) {
-    return (
-      <PanelMessage
-        eyebrow="Sesion sin codigo docente"
-        title="La sesion actual no tiene un codigo docente asociado."
-        message="La consulta personal de constancias requiere un usuario con teacherCode."
-      />
-    );
-  }
 
   return (
     <section className="space-y-5">
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
-            <DemoOnly>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">
-                Aula Virtual simulada
-              </p>
-            </DemoOnly>
             <h2 className="mt-1 text-2xl font-semibold text-[var(--text)]">Mis constancias</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Consulta, visualizacion y descarga de constancias generadas.
-            </p>
-            <p className="mt-1 text-sm leading-6 text-[var(--muted)]">
-              Se muestran las ultimas versiones disponibles para el codigo docente{" "}
-              <span className="font-semibold text-[var(--gold-soft)]">{teacherCode}</span>.
+              Consulta, visualiza y descarga tus constancias.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-            <DemoOnly>
-              <button
-                className="min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
-                onClick={() => setIsSimulationFormOpen(true)}
-                type="button"
-              >
-                Simular recepcion desde Aula Virtual
-              </button>
-            </DemoOnly>
             <button
-              className="min-h-10 rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="control-focus min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              onClick={() => setIsCourseFormOpen(true)}
+              type="button"
+            >
+              Generar por curso
+            </button>
+            <button
+              className="control-focus min-h-10 rounded-md border border-[var(--control-border)] px-4 py-2 text-sm font-semibold text-[var(--text)] transition hover:border-[var(--gold)] hover:text-[var(--gold-soft)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-[var(--control-border)] disabled:hover:text-[var(--text)]"
               disabled={isLoading}
               onClick={loadCertificates}
               type="button"
@@ -121,33 +79,32 @@ export function TeacherCertificatesView() {
         </div>
       </section>
 
-      <DemoOnly>
-        {isSimulationFormOpen ? (
-          <CourseCertificateSimulationForm
-            onCancel={() => setIsSimulationFormOpen(false)}
-            onGenerated={loadCertificates}
-            teacherCode={teacherCode}
-            user={user}
-          />
-        ) : null}
-      </DemoOnly>
+      {isCourseFormOpen ? (
+        <CourseCertificateForm
+          onCancel={() => setIsCourseFormOpen(false)}
+          onGenerated={loadCertificates}
+        />
+      ) : null}
 
-      <SemesterCertificateSimulationForm
+      <SemesterCertificateForm
         certificates={certificates}
+        certificatesError={errorMessage}
+        certificatesLoading={isLoading}
         onGenerated={loadCertificates}
-        teacherCode={teacherCode}
+        onRetryCertificates={loadCertificates}
       />
 
-      {isLoading ? <PanelMessage message="Cargando constancias..." /> : null}
+      {isLoading ? <PanelMessage message="Cargando constancias..." role="status" /> : null}
 
       {!isLoading && errorMessage !== null ? (
         <PanelMessage
           eyebrow="Consulta no disponible"
-          title="No se pudo cargar el listado de constancias"
           message={errorMessage}
+          role="alert"
+          title="No se pudo cargar el listado de constancias"
           action={
             <button
-              className="min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
+              className="control-focus min-h-10 rounded-md bg-[var(--gold)] px-4 py-2 text-sm font-semibold text-[#15130c] transition hover:bg-[var(--gold-soft)]"
               onClick={loadCertificates}
               type="button"
             >
@@ -160,12 +117,8 @@ export function TeacherCertificatesView() {
       {!isLoading && errorMessage === null && certificates.length === 0 ? (
         <PanelMessage
           eyebrow="Sin constancias"
-          title="Aun no tienes constancias generadas."
-          message={
-            isDemo
-              ? "Las constancias apareceran aqui cuando sean generadas desde la simulacion de Aula Virtual."
-              : "Las constancias apareceran aqui cuando esten disponibles para tu perfil."
-          }
+          title="Aún no tienes constancias generadas."
+          message="Las constancias aparecerán aquí cuando estén disponibles para tu perfil."
         />
       ) : null}
 
@@ -177,7 +130,7 @@ export function TeacherCertificatesView() {
                 Resumen de constancias
               </p>
               <h3 className="mt-1 text-lg font-semibold text-[var(--text)]">
-                Ultimas versiones visibles
+                Constancias disponibles
               </h3>
             </div>
             <SummaryGrid items={summary} />
@@ -194,7 +147,7 @@ function buildSummary(certificates: CertificateGenerationSummary[]): SummaryItem
   const latestSemester = certificates[0]?.semester ?? "Sin semestre";
 
   return [
-    { label: "Visibles", value: certificates.length },
+    { label: "Constancias", value: certificates.length },
     {
       label: "Generadas",
       value: certificates.filter((certificate) => certificate.status === "GENERADO").length,
@@ -203,7 +156,7 @@ function buildSummary(certificates: CertificateGenerationSummary[]): SummaryItem
       label: "Aprobadas",
       value: certificates.filter((certificate) => certificate.status === "APROBADO").length,
     },
-    { label: "Periodos", value: periodos.size },
+    { label: "Períodos", value: periodos.size },
     { label: "Semestre", value: latestSemester },
   ];
 }
@@ -231,17 +184,18 @@ function PanelMessage({
   title,
   message,
   action,
+  role,
 }: {
   eyebrow?: string;
   title?: string;
   message: string;
   action?: ReactNode;
+  role?: "alert" | "status";
 }) {
   return (
     <section
-      aria-live="polite"
       className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
-      role={title ? "alert" : "status"}
+      role={role}
     >
       {eyebrow ? (
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--gold-soft)]">

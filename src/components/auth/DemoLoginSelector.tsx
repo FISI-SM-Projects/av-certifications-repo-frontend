@@ -61,12 +61,12 @@ export function DemoLoginSelector() {
 
         setUsuarios(usuariosDemo);
         setSelectedEmail((currentEmail) => currentEmail || usuariosDemo[0]?.email || "");
-      } catch (error) {
+      } catch {
         if (!isMounted) {
           return;
         }
 
-        setLoadError(error instanceof Error ? error.message : "No se pudieron cargar los usuarios");
+        setLoadError("El acceso de demostración no está disponible en este entorno.");
       } finally {
         if (isMounted) {
           setIsLoadingUsers(false);

@@ -1,4 +1,5 @@
 import { buildApiUrl } from "@/lib/api";
+import { getToken } from "@/services/auth/sessionStorage";
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -32,6 +33,8 @@ export type HttpJsonOptions<T> = Omit<RequestInit, "body"> & {
   defaultErrorMessage?: string;
 };
 
+export type HttpBlobOptions = Omit<HttpJsonOptions<never>, "body" | "validate">;
+
 export async function httpJson<T>(
   path: string,
   options: HttpJsonOptions<T> = {},
@@ -54,6 +57,24 @@ export async function httpJson<T>(
   }
 
   return payload as T;
+}
+
+export async function httpBlob(
+  path: string,
+  options: HttpBlobOptions = {},
+): Promise<Blob> {
+  const response = await request<never>(path, options);
+
+  if (!response.ok) {
+    const payload = await readResponsePayload(response);
+    throw new ApiError(
+      extractMessage(payload) ?? options.defaultErrorMessage ?? "No se pudo completar la solicitud",
+      response.status,
+      { payload },
+    );
+  }
+
+  return response.blob();
 }
 
 async function request<T>(path: string, options: HttpJsonOptions<T>): Promise<Response> {
@@ -84,14 +105,21 @@ async function request<T>(path: string, options: HttpJsonOptions<T>): Promise<Re
   }
 
   try {
+    const requestHeaders = new Headers(headers);
+    if (body !== undefined && !requestHeaders.has("Content-Type")) {
+      requestHeaders.set("Content-Type", "application/json");
+    }
+
+    const token = getToken();
+    if (token !== null && !requestHeaders.has("Authorization")) {
+      requestHeaders.set("Authorization", `Bearer ${token}`);
+    }
+
     return await fetch(buildApiUrl(path), {
       ...init,
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: init.cache ?? "no-store",
-      headers: {
-        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-        ...headers,
-      },
+      headers: requestHeaders,
       signal: controller.signal,
     });
   } catch (error) {

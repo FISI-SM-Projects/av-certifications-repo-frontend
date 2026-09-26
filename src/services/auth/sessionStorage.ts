@@ -1,10 +1,45 @@
 import type { RolUsuario, UsuarioSesion } from "@/types/auth/auth.types";
 
 const SESSION_STORAGE_KEY = "gestion-docente-session";
+const TOKEN_STORAGE_KEY = "gestion-docente-token";
 const ROLES_VALIDOS: RolUsuario[] = ["DOCENTE", "DIRECTOR", "ADMIN"];
 
 function estaEnNavegador(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
+function normalizeToken(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const token = value.trim();
+  return token && token.toLowerCase() !== "undefined" && token.toLowerCase() !== "null"
+    ? token
+    : null;
+}
+
+export function saveToken(token: string): void {
+  const validToken = normalizeToken(token);
+  if (validToken === null) {
+    throw new Error("El token de autenticacion no es valido.");
+  }
+
+  if (estaEnNavegador()) {
+    window.localStorage.setItem(TOKEN_STORAGE_KEY, validToken);
+  }
+}
+
+export function getToken(): string | null {
+  return estaEnNavegador()
+    ? normalizeToken(window.localStorage.getItem(TOKEN_STORAGE_KEY))
+    : null;
+}
+
+export function removeToken(): void {
+  if (estaEnNavegador()) {
+    window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
 }
 
 function esRolUsuario(value: unknown): value is RolUsuario {

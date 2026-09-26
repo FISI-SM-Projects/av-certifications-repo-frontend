@@ -1,12 +1,18 @@
 import { DemoOnly } from "@/components/demo/DemoOnly";
 import type { Docente } from "@/types/docente/perfilDocente.types";
+import type { TeacherProfile } from "@/types/docente/teacherProfile.types";
 
 type PerfilDocenteHeaderProps = {
-  docente: Docente;
+  docente: Docente | TeacherProfile;
 };
 
 export function PerfilDocenteHeader({ docente }: PerfilDocenteHeaderProps) {
-  const initials = `${docente.nombres.charAt(0)}${docente.apellidos.charAt(0)}`.toUpperCase();
+  const isBackendTeacher = "firstName" in docente;
+  const firstName = isBackendTeacher ? docente.firstName : docente.nombres;
+  const lastName = isBackendTeacher
+    ? [docente.paternalLastName, docente.maternalLastName].filter(Boolean).join(" ")
+    : docente.apellidos;
+  const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
   return (
     <section className="rounded-lg border border-[var(--border)] bg-[linear-gradient(135deg,rgba(90,15,36,0.98),rgba(59,10,24,0.98))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.2)]">
@@ -20,21 +26,29 @@ export function PerfilDocenteHeader({ docente }: PerfilDocenteHeaderProps) {
               Perfil institucional
             </p>
             <h2 className="mt-1 text-2xl font-semibold leading-tight text-[var(--text)]">
-              {docente.nombres} {docente.apellidos}
+              {firstName} {lastName}
             </h2>
-            <p className="mt-1 break-words text-sm text-[var(--muted)]">
-              {docente.correoInstitucional}
-            </p>
+            {!isBackendTeacher ? (
+              <p className="mt-1 break-words text-sm text-[var(--muted)]">
+                {docente.correoInstitucional}
+              </p>
+            ) : null}
           </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[34rem] lg:grid-cols-4">
           <HeaderBadge label="Rol" value="DOCENTE" />
-          <HeaderBadge label="Departamento" value={docente.departamentoAcademico} />
-          <HeaderBadge label="Estado" value="Activo" tone="success" />
-          <DemoOnly>
-            <HeaderBadge label="Estado de datos" value="Datos simulados" />
-          </DemoOnly>
+          <HeaderBadge label="Departamento" value={isBackendTeacher ? docente.department ?? "No registrado" : docente.departamentoAcademico} />
+          <HeaderBadge
+            label="Estado"
+            value={isBackendTeacher ? docente.registerState : "Activo"}
+            tone={!isBackendTeacher || docente.registerState === "ACTIVO" ? "success" : "default"}
+          />
+          {!isBackendTeacher ? (
+            <DemoOnly>
+              <HeaderBadge label="Estado de datos" value="Datos simulados" />
+            </DemoOnly>
+          ) : null}
         </div>
       </div>
     </section>

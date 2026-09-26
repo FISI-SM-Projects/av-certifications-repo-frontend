@@ -1,7 +1,8 @@
 import type { Docente } from "@/types/docente/perfilDocente.types";
+import type { TeacherProfile } from "@/types/docente/teacherProfile.types";
 
 type DatosDocenteCardProps = {
-  docente: Docente;
+  docente: Docente | TeacherProfile;
 };
 
 type Field = {
@@ -15,27 +16,45 @@ type FieldGroup = {
 };
 
 export function DatosDocenteCard({ docente }: DatosDocenteCardProps) {
-  const groups: FieldGroup[] = [
+  const groups: FieldGroup[] = "firstName" in docente ? [
     {
-      title: "Identificacion",
+      title: "Identificación",
       fields: [
-        { label: "Codigo", value: docente.codigo },
+        { label: "Código", value: docente.code },
+        { label: "Nombres", value: docente.firstName },
+        { label: "Apellido paterno", value: docente.paternalLastName },
+        ...(docente.maternalLastName !== null ? [{ label: "Apellido materno", value: docente.maternalLastName }] : []),
+        ...(docente.dni !== null ? [{ label: "DNI", value: docente.dni }] : []),
+      ],
+    },
+    {
+      title: "Vínculo institucional",
+      fields: [
+        { label: "Departamento académico", value: docente.department ?? "No registrado" },
+        { label: "Estado", value: docente.registerState },
+      ],
+    },
+  ] : [
+    {
+      title: "Identificación",
+      fields: [
+        { label: "Código", value: docente.codigo },
         { label: "Nombres", value: docente.nombres },
         { label: "Apellidos", value: docente.apellidos },
       ],
     },
     {
-      title: "Contacto academico",
+      title: "Contacto académico",
       fields: [
         { label: "Correo institucional", value: docente.correoInstitucional },
-        { label: "Departamento academico", value: docente.departamentoAcademico },
+        { label: "Departamento académico", value: docente.departamentoAcademico },
       ],
     },
     {
-      title: "Vinculo institucional",
+      title: "Vínculo institucional",
       fields: [
-        { label: "Categoria", value: docente.categoria },
-        { label: "Condicion", value: docente.condicion },
+        { label: "Categoría", value: docente.categoria },
+        { label: "Condición", value: docente.condicion },
         { label: "Estado", value: "Activo" },
       ],
     },
@@ -48,7 +67,7 @@ export function DatosDocenteCard({ docente }: DatosDocenteCardProps) {
           Datos generales
         </p>
         <h3 className="mt-1 text-lg font-semibold text-[var(--text)]">
-          Informacion del docente
+          Información del docente
         </h3>
       </div>
 

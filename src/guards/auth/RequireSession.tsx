@@ -26,7 +26,7 @@ export function RequireSession({ children }: RequireSessionProps) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace("/login-demo");
+      router.replace("/login");
     }
   }, [isLoading, isAuthenticated, router]);
 

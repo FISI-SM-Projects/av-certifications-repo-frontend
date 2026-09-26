@@ -10,10 +10,11 @@ type ConstanciasTableProps = {
 export function ConstanciasTable({
   constancias,
   detailReturnTo,
-  emptyMessage = "Aun no tienes constancias generadas.",
+  emptyMessage = "Aún no tienes constancias generadas.",
 }: ConstanciasTableProps) {
   return (
     <CertificateSummaryTable
+      accessScope="administrative"
       certificates={constancias}
       detailReturnTo={detailReturnTo}
       emptyMessage={emptyMessage}
